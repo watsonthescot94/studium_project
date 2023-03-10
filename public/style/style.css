@@ -1,0 +1,58 @@
+.error_message {
+    color: red
+}
+
+#course_description {
+    width: 500px;
+    resize: none;
+}
+
+.small_page_container {
+    width: 60%;
+    margin: auto;
+    background-color: rgb(134, 189, 183);
+    margin-top: 0px;
+    padding: 10px;
+    min-height: 100vh;
+}
+
+button {
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition-duration: 0.4s;
+    padding: 10px;
+    border-style: none;
+}
+
+button:hover {
+    background-color: lightblue;
+    color: black;
+}
+
+body {
+    margin: 0px;
+    background-color: #f9f9f9;
+    overflow-y: scroll;
+}
+
+p, button, a, h1, h2, label, option {
+    font-family: 'Open Sans', sans-serif;
+}
+
+input, textarea {
+    background-color: white;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+select {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: white;
+}
+
+textarea {
+    resize: none;
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/scripts/course_list.js" type="application/javascript"></script>
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/course_list.css">
+    <link rel="stylesheet" href="/style/navbar.css">
+    <title><%= page_title %> | Studium</title>
+</head>
+<body>
+    <%- include("./navbar.ejs"), { user } %>
+
+    <div class="small_page_container">
+        <h1><%= header %></h1>
+        
+        <label for="sort">Sort: </label>
+        <select id="sort">
+            <option value="new_to_old">Newest to Oldest</option>
+            <option value="old_to_new">Oldest to Newest</option>
+        </select>
+
+        <label id="select_subject_label" for="select_subject">Filter by Subject: </label>
+        <select id="select_subject">
+            <option value="All Subjects">All Subjects</option>
+            <option value="Art">Art</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="English">English</option>
+            <option value="Media">Media</option>
+            <option value="Physics">Physics</option>
+            <option value="Software Development">Software Development</option>
+        </select>
+
+        <div id="courses">
+            <p>Finding courses...</p>
+        </div>
+    </div>
+</body>
+</html>

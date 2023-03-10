@@ -1,0 +1,11 @@
+.course_listing {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid black;
+}
+
+#select_subject_label {
+    margin-left: 20px;
+}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/scripts/course_page.js" type="application/javascript"></script>
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/course_page.css">
+    <link rel="stylesheet" href="/style/navbar.css">
+    <title><%= page_name %></title>
+</head>
+<body>
+    <div class="hidden">
+        <p id="course_id_page_id"><%=course_id%> <%=page_id%></p>
+    </div>
+
+    <div id="pop_up_background">
+        <div id="page_delete_confirmation_container" class="pop_up_container">
+            <h1>Delete Page</h1>
+            <p>Please enter your password to confirm page deletion</p>
+            <input id="page_delete_password_input" type="password">
+            <div id="page_delete_error_message"></div>
+            <button id="page_delete_confirmation_button">CONFIRM</button>
+            <button id="page_delete_cancel_button">CANCEL</button>
+        </div>
+    </div>
+
+    <%- include("./navbar.ejs"), { user } %>
+
+    <div class="small_page_container">
+
+        <div id="page_info" class="page_info">
+            <h3><a href="/course/<%=course_id%>">&#60; <%=course_name%></a></h3>
+            <div id="course_info" class="course_info">
+                <h1 id="page_name"><%=page_name%></h1>
+                <button id="make_page_template_button">MAKE PAGE TEMPLATE</button>
+                <p><b>Description:</b> <span id="page_description"><%=page_description%></span></p>
+            </div>
+        </div>
+
+        <div id="edit_page_info" class="page_info">
+            <h3><a href="/course/<%=course_id%>">&#60; <%=course_name%></a></h3>
+            <p><b>Page Name:</b></p>
+            <input type="text" id="edit_page_name_input"><br><br>
+            <p><b>Description:</b></p>
+            <textarea id="edit_page_description_input"></textarea><br><br>
+            <% if (teacher_authorised) { %>
+                <div id="delete_page_button_container">
+                    <button id="delete_page_button">DELETE PAGE</button>
+                </div>
+            <% } %>
+        </div>
+
+        <% if (teacher_authorised) { %> 
+            <button id="enter_edit_mode_button">ENTER EDIT MODE</button>
+            <button id="save_edit_button">SAVE EDIT</button>
+        <% } %>
+
+        <br><h1>Content</h1>
+        <% if (typeof page_content_count !== 'undefined' && page_content_count == 0) { %>
+            <p id="no_content_yet">No content yet</p>
+        <% } %>
+        <button id="add_text_bubble_button">ADD FIRST TEXT BUBBLE</button>
+        <div id="page_content"></div>
+
+    </div>
+</body>
+</html>

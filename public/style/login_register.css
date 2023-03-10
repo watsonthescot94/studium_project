@@ -1,0 +1,25 @@
+#login_form_container {
+    margin: auto;
+    width: 60%;
+    border-radius: 10px;
+    background-color: white;
+    padding: 20px;
+    margin-top: 10px;
+    border: 1px solid lightgray;
+}
+
+.login_input {
+    width: 60%;
+}
+
+#login_submit_button {
+    margin-top: 15px;
+}
+
+#error_messages {
+    margin-top: 15px;
+}
+
+#error_messages p {
+    margin-bottom: 0px;
+}

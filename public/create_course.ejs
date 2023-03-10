@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="scripts/create_course.js" type="application/javascript"></script>
+    <title>Create Course</title>
+</head>
+<body>
+    <form action="create-course" method="post">
+        <label for="course_name">Course Name:</label>
+        <input id="course_name" required name="name" type="text" maxlength="100"
+            value="<%= typeof name !== 'undefined' ? name : '' %>"><br><br>
+        <label for="course_type">Course Type:</label>
+        <select id="course_type" required name="type">
+            <option value="Computing" <% if (typeof type !== 'undefined' && type == "Computing") { %> selected <%}%>>Computing</option>
+            <option value="Art" <% if (typeof type !== 'undefined' && type == "Art") { %> selected <%}%>>Art</option>
+            <option value="Mathematics" <% if (typeof type !== 'undefined' && type == "Mathematics") { %> selected <%}%>>Mathematics</option>
+            <option value="Physics" <% if (typeof type !== 'undefined' && type == "Physics") { %> selected <%}%>>Physics</option>
+            <option value="Chemistry" <% if (typeof type !== 'undefined' && type == "Chemistry") { %> selected <%}%>>Chemistry</option>
+            <option value="Biology" <% if (typeof type !== 'undefined' && type == "Biology") { %> selected <%}%>>Biology</option>
+            <option value="English" <% if (typeof type !== 'undefined' && type == "English") { %> selected <%}%>>English</option>
+            <option value="Other" <% if (typeof type !== 'undefined' && type == "Other") { %> selected <%}%>>Other</option>
+        </select><br><br>
+        <label for="course_description">Course Description:</label>
+        <textarea id="course_description" required name="description" maxlength="1000" rows="5"><%= typeof description !== 'undefined' ? description : '' %></textarea><br><br>
+        <% if (typeof errors != 'undefined') { errors.forEach(function(error) { %>
+            <p class="error_message"><%= error %></p>
+        <% })} %>
+        <button id="course_create_submit_button" type="submit">CREATE COURSE</button>
+    </form>
+</body>
+</html>

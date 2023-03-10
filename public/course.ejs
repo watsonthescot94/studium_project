@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400&display=swap" rel="stylesheet">-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/scripts/course.js" type="application/javascript"></script>
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/navbar.css">
+    <link rel="stylesheet" href="/style/course.css">
+    <title><%= course_name %> | Studium</title>
+</head>
+<body>
+    <div class="hidden">
+        <p id="course_id"><%=course_id%></p>
+    </div>
+
+    <div id="pop_up_background">
+        <div id="add_new_page_container">
+            <h1>CREATE NEW PAGE</h1>
+            <label for="new_page_name_input">New Page Title:</label><br>
+            <input id="new_page_name_input" type="text"><br><br>
+            <label for="new_page_description_input">New Page Description:</label><br>
+            <textarea id="new_page_description_input"></textarea><br><br>
+            <div id="new_page_error_message"></div>
+            <button id="create_new_page_button">CREATE NEW PAGE</button>
+            <button id="cancel_create_new_page_button">CANCEL</button>
+        </div>
+    </div>
+
+    <%- include("./navbar.ejs"), { user } %>
+
+    <div class="small_page_container">
+
+        <% if ((typeof course_visible_to_user !== 'undefined' && course_visible_to_user) || teacher_authorised) { %>
+
+            <div id="course_info" class="course_info">
+                <h1 id="course_name"><%= course_name %></h1>
+
+                <% if (display_enrol !== 'undefined' && display_enrol) { %>
+                    <button id="enrol_button" class="enrol_button">ENROL</button>
+                <% } %>
+        
+                <% if (display_unenrol !== 'undefined' && display_unenrol) { %>
+                    <button id="enrol_button" class="unenrol_button">UNENROL</button>
+                <% } %>
+
+                <button id="make_course_template_button">MAKE COURSE TEMPLATE</button>
+                
+                <p id="course_teachers"><b>Teachers:</b> <% if (typeof teachers !== 'undefined') { teachers.forEach(function(teacher, i) { %>
+                    <a href="/user/<%= teacher._id %>">@<%=teacher.username%></a><% if (i != teachers.length -1) { %>, <% } %>
+                    <% }) %>
+                    <% } else { %> None found <% } %>
+                </p>
+                <p><b>Description:</b> <span id="course_description"><%= course_description %></span></p>
+                <p><b>Subject:</b> <span id="course_subject"><%= course_subject %></span></p>
+            </div>
+
+            <% if (teacher_authorised) { %>
+                <div id="edit_course_info" class="course_info">
+                    <p><b>Course Name:</b></p>
+                    <input type="text" id="edit_course_name_input"><br><br>
+                    <p><b>Teachers:</b> <% if (typeof teachers !== 'undefined') { teachers.forEach(function(teacher, i) { %>
+                        <a href="/user/<%= teacher._id %>">@<%=teacher.username%></a><% if (i != teachers.length -1) { %>, <% } %>
+                        <% }) %>
+                        <% } else { %> None found <% } %>
+                    </p>
+                    <button id="add_teacher_button">ADD TEACHER</button><br><br>
+                    <p><b>Description:</b></p>
+                    <textarea id="edit_course_description_input"></textarea><br><br>
+                    <p><b>Subject:</b></p>
+                    <select id="edit_course_subject" name="type">
+                        <option value="Computing">Computing</option>
+                        <option value="Art">Art</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                        <option value="English">English</option>
+                        <option value="Media">Media</option>
+                        <option value="Other">Other</option>
+                    </select><br><br>
+                    <input type="checkbox" id="make_course_visible_checkbox" <%= typeof course_visible_to_public !== 'undefined' && course_visible_to_public ? "checked" : "" %>>
+                    <label for="make_course_visible_checkbox">Course Info Visible to Public</label><br><br>
+                    <button id="delete_course_button">DELETE COURSE</button><br><br>
+                </div><br>
+
+                <button id="enter_edit_mode_button">ENTER EDIT MODE</button>
+                <button id="save_edit_button">SAVE EDIT</button>
+                <button id="cancel_edit_button">CANCEL EDIT</button>
+            <% } %>
+
+            <% if (display_class_links !== 'undefined' && display_class_links) { %>
+
+                <% if (typeof pages !== 'undefined' && pages.length > 0) { %>
+                    <div id="page_links">
+                        <h1>Classes</h1>
+                        <% pages.forEach(function(page) { %>
+                            <% if (page.visible || teacher_authorised) { %>
+                                <a href="/course/<%=course_id%>/page/<%=page._id%>"><button class="class_link<% if (page.visible) { %> class_visible<% } else if (teacher_authorised) { %> class_invisible <% } else { %> display_none <% } %>"><%= page.name %></button></a><br><br>
+                            <% } %>
+                        <% }) %>
+                    </div>
+                <% } %>
+
+                <% if (teacher_authorised) { %>
+                    <button id="add_new_page_button">ADD NEW PAGE</button>
+                <% } %>
+
+                
+            <% } else { %>
+                <p>Class links can only be accessed by enrolled students</p>
+            <% } %>
+
+        <% } else { %>
+            <p>Course Not Found</p>
+        <% } %>
+
+    </div>
+</body>
+</html>

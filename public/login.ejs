@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/navbar.css">
+    <link rel="stylesheet" href="/style/login_register.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/scripts/login.js" type="application/javascript"></script>
+    <title>Login</title>
+</head>
+<body>
+    <%- include ("./navbar.ejs", { user }) %>
+
+    <div class="small_page_container">
+        <div id="login_form_container">
+            <h1>Login</h1>
+            <form id="login_form">
+                <label for="login_username">Username:</label><br>
+                <input id="login_username" required type="text" name="username" class="login_input"
+                    value="<%= typeof username != 'undefined' ? username : '' %>"><br><br>
+                <label for="login_password">Password:</label><br>
+                <input id="login_password" required type="password" name="password" class="login_input"
+                    value="<%= typeof password != 'undefined' ? password : '' %>"><br>
+                    <span id="error_messages"></span>
+                <button id="login_submit_button" type="button">LOGIN</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

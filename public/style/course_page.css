@@ -1,0 +1,110 @@
+#pop_up_background {
+    background-color:rgba(0, 0, 0, 0.8);
+    display: none;
+    width: 100%;
+    height: 100%;
+    position: fixed;
+}
+
+#page_delete_confirmation_container {
+    background-color: white;
+    width: 30%;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    display: none;
+    position: absolute;
+    left: 50%;
+    transform:translateX(-50%);
+}
+
+#page_delete_confirmation_button {
+    background-color: red;
+    margin-right: 10px;
+}
+
+#page_delete_password_input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+#cancel_edit_button {
+    display: none;
+}
+
+#delete_page_button_container {
+    display: flex;
+    justify-content: right;
+}
+
+#delete_page_button {
+    background-color: red;
+}
+
+.page_info {
+    border-radius: 10px;
+    border-style: solid;
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+#edit_page_info {
+    display: none;
+}
+
+#edit_page_description_input {
+    width: 50%;
+}
+
+#edit_page_name_input {
+    width: 50%;
+}
+
+.text_bubble {
+    background-color: white;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    border-style: solid;
+    border-radius: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.edit_text_bubble {
+    background-color: white;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    border-style: dotted;
+    border-radius: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.textarea_edit_text_bubble {
+    background-color: white;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#edit_text_preview_button {
+    margin-right: 10px;
+}
+
+.bottom_button {
+    margin-top: 10px;
+    margin-right: 10px;
+}
+
+#add_text_bubble_button {
+    display: none;
+}
