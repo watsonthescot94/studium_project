@@ -1,78 +1,249 @@
-/* Navbar container */
-.navbar {
-    overflow: hidden;
-    background-color: #333;
-    font-family: Arial;
+  * {
+    box-sizing: border-box;
+  }
+
+  .bold {
+    font-weight: bold;
+  }
+
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    background-color: black;
     width: 100%;
     margin: auto;
   }
   
   /* Links inside the navbar */
-  .navbar a {
+  .navbar_link {
     font-size: 16px;
     color: white;
-    text-align: center;
     padding: 14px 16px;
     text-decoration: none;
+    cursor: pointer;
   }
 
-  .left_link {
-      float: left;
+  #left_navbar_links, #right_navbar_links {
+    display: flex;
+    flex-direction: row;
+    cursor: pointer;
   }
 
-  .right_link {
-      float: right;
+  #left_navbar_links {
+    margin-left: 20px;
+  }
+
+  #right_navbar_links {
+    margin-right: 20px;
+  }
+
+  .navbar_link:hover, #my_courses_link:hover, #notifications_link:hover {
+    background-color: rgb(84, 84, 84);
+    cursor: pointer;
+  }
+
+  #my_courses_dropdown_menu {
+    left: 0px;
+    min-width: 130px;
   }
   
-  /* The dropdown container */
-  .dropdown {
-    float: left;
-    overflow: hidden;
-  }
-  
-  /* Dropdown button */
-  .dropdown .dropbtn {
+  .dropdown_link {
+    position: relative;
     font-size: 16px;
     border: none;
     outline: none;
     color: white;
     padding: 14px 16px;
     background-color: inherit;
-    font-family: inherit; /* Important for vertical align on mobile phones */
-    margin: 0; /* Important for vertical align on mobile phones */
+    margin: 0px;
   }
-  
-  /* Add a red background color to navbar links on hover */
-  .navbar a:hover, .dropdown:hover .dropbtn {
-    background-color: rgb(84, 84, 84);
-  }
-  
-  /* Dropdown content (hidden by default) */
-  .dropdown-content {
+
+  .dropdown_menu {
     display: none;
     position: absolute;
-    background-color: #f9f9f9;
-    min-width: 160px;
+    bottom: 0px;
+    transform:translateY(100%);
     box-shadow: 0px 8px 8px 0px rgba(0,0,0,0.2);
     z-index: 1;
   }
-  
-  /* Links inside the dropdown */
-  .dropdown-content a {
-    float: none;
+
+  #my_courses_link:hover #my_courses_dropdown_menu {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dropdown_menu_link {
+    background-color: white;
     color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
+    white-space: nowrap;
     text-align: left;
+    padding: 14px 16px;
+    text-decoration: none;
   }
-  
-  /* Add a grey background color to dropdown links on hover */
-  .dropdown-content a:hover {
-    background-color: #ddd;
+
+  .dropdown_menu_link:hover {
+    background-color: lightgray;
   }
-  
-  /* Show the dropdown menu on hover */
-  .dropdown:hover .dropdown-content {
-    display: block;
+
+  #notifications_wrapper {
+    color: black;
+    background-color: white;
+    right: 0px;
+    width: 350px;
+    cursor: default;
   }
+
+  #notifications_header {
+    padding: 10px;
+  }
+
+  #notifications_header h3 {
+    margin: 0px;
+  }
+
+  #notifications_list {
+    max-height: 350px;
+    overflow-y: auto;
+  }
+
+
+.notification {
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+}
+
+.notification:hover {
+  background-color: lightgray;
+  cursor: pointer;
+}
+
+.notification_top_text_wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 0px;
+  margin-bottom: 5px;
+}
+
+.notification_top_text {
+  font-size: 12px;
+  margin: 0px;
+}
+
+.notification_timestamp {
+  font-size: 12px;
+  margin: 0px;
+}
+
+.notification_flairs {
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.new_questions_flair {
+  background-color: lightgreen;
+}
+
+.new_feedback_flair {
+  background-color: lightskyblue;
+}
+
+.new_replies_flair {
+  background-color: lightcoral;
+}
+
+.watched_comment_new_replies_flair {
+  background-color: lightslategray;
+  color: white;
+}
+
+.highlighted_comment_notification_flair {
+  background-color: lightseagreen;
+}
+
+.unread_flair {
+  background-color: red;
+  color: white;
+  margin-left: 5px;
+}
+
+.notification_text {
+  margin: 0px;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.new_comment_previews_list {
+  margin-left: 20px;
+  border-left: 1px solid darkgrey;
+  padding: 10px;
+}
+
+.new_comment_wrapper {
+  margin-bottom: 10px;
+}
+
+.last_new_comment_wrapper {
+  margin-bottom: 0px;
+}
+
+.new_comment_username_and_timestamp {
+  margin: 0px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  color: darkslategrey;
+}
+
+.new_comment_text {
+  margin: 0px;
+  font-size: 12px;
+  color: darkslategrey;
+}
+
+.remove_notification_button_wrapper {
+  display: flex;
+  justify-content: right;
+}
+
+.show_more_comment_previews_button {
+  color: blue;
+  cursor: pointer;
+  margin-left: 20px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.show_more_comment_previews_button:hover {
+  color: darkblue;
+}
+
+#notifications_icon_wrapper {
+  position: relative;
+  height: 20px;
+  width: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+#notifications_icon {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+#notifications_count_icon_wrapper {
+  display: none;
+  position: absolute;
+  bottom: -9px;
+  right: -10px;
+  margin: 0px;
+  padding: 1px 5px;
+  background-color: red;
+  border-radius: 5px;
+}
+
+#notifications_count_icon_text {
+  margin: 0px;
+  font-size: 10px;
+}

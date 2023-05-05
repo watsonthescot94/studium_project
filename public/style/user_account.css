@@ -1,0 +1,174 @@
+#profile_details_window_wrapper {
+    margin: auto;
+    width: 60%;
+    border-radius: 10px;
+    background-color: white;
+    padding: 20px;
+    margin-top: 10px;
+}
+
+#profile_page_header_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+#profile_page_header {
+    margin: 0px;
+}
+
+#profile_page_header_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(100% - 2px));
+}
+
+#profile_avatar_and_details_wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+#profile_avatar_wrapper {
+    width: 20%;
+    margin-right: 20px;
+}
+
+#profile_avatar {
+    max-width: 100%;
+    border-radius: 50%;
+    border: 2px solid lightgray;
+}
+
+#profile_details_wrapper {
+    width: 80%;
+}
+
+.profile_detail_wrapper {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.profile_detail_header_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 5px;
+}
+
+.profile_detail_header {
+    margin: 0px;
+}
+
+.profile_detail_header_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(-100% - 6px));
+}
+
+.profile_detail_text_wrapper {
+    position: relative;
+}
+
+.profile_detail_text {
+    display: inline-block;
+    margin: 0px;
+}
+
+.update_profile_detail_button_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+    position: absolute;
+    top: 50%;
+    right: 0px;
+    transform: translateY(-50%);
+}
+
+.update_profile_detail_button_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(-100% - 4px));
+}
+
+#delete_profile_button_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+#delete_profile_button_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(-100% - 5px));
+}
+
+#profile_detail_edit_window_wrapper, #delete_profile_window_wrapper {
+    display: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+#profile_detail_edit_window_background, #delete_profile_window_background {
+    background-color: black;
+    opacity: 0.9;
+    width: 100%;
+    height: 100%;
+}
+
+#profile_detail_edit_window, #delete_profile_window {
+    background-color: white;
+    width: 30%;
+    padding: 10px;
+    border-radius: 10px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#profile_detail_edit_window_header_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+#profile_detail_edit_window_header_helper_icon_text_wrapper {
+    transform: translate(-50%, calc(-100% - 6px));
+}
+
+#profile_detail_edit_window_header, #delete_profile_window_header {
+    margin: 0px;
+}
+
+.profile_detail_edit_window_field_wrapper, .delete_profile_window_field_wrapper {
+    margin-bottom: 10px;
+}
+
+.profile_detail_edit_window_input_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 5px;
+}
+
+.profile_detail_edit_window_input_helper_icon_text_wrapper {
+    transform: translate(-50%, calc(-100% - 7px));
+}
+
+#delete_profile_window_main_text {
+    margin-top: 0px;
+    margin-bottom: 10px;
+}
+
+.profile_detail_edit_window_label, .delete_profile_window_label {
+    display: inline-block;
+}
+
+.profile_detail_edit_window_input, .delete_profile_window_input {
+    width: 100%;
+    padding: 5px;
+}
+
+#profile_detail_edit_window_bottom_buttons_wrapper, #delete_profile_window_bottom_buttons_wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+.profile_detail_edit_window_button_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+    margin-right: 15px;
+}
+
+.profile_detail_edit_window_button_helper_icon_text_wrapper {
+    transform: translate(-50%, calc(-100% - 4px));
+}

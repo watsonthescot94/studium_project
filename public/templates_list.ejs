@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.4/dist/js.cookie.min.js"></script>
+    <script src="/scripts/alert.js" type="application/javascript"></script>
+    <script src="/scripts/templates_list.js" type="application/javascript"></script>
+    <script src="/scripts/helper_icons.js" type="application/javascript"></script>
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/templates_list.css">
+    <link rel="stylesheet" href="/style/alert.css">
+    <title>Your Templates | Studium</title>
+</head>
+<body>
+    <div id="delete_template_window_wrapper">
+        <div id="delete_template_window_wrapper_background"></div>
+
+        <div id="delete_template_window">
+            <div id="delete_template_window_header_and_helper_icon_wrapper">
+                <h3 id="delete_template_window_header">Delete Template</h3>
+
+                <div class='helper_icon_wrapper'>
+                    <img class='helper_icon' src='/images/helper_icon.png'>
+
+                    <div id='delete_template_window_header_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                        <p class="helper_icon_text">
+                            If you click the "Delete" button, the selected template will be deleted from your saved templates. 
+                            If you click the "Cancel" button, this window will close and the template will not be deleted.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+
+            <div class="divider"></div>
+
+            <p id="delete_template_window_text">Are you sure you want to delete this template?</p>
+
+            <div id="delete_template_window_bottom_buttons">
+                <button id="delete_template_window_confirm_button" class="red_button leftmost_button">Delete Template</button>
+                <button id="delete_template_window_cancel_button" class="white_button middle_button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <%- include("./navbar.ejs"), { current_user } %>
+
+    <div class="small_page_container">
+        <div id="displayed_templates_window_wrapper">
+            <div id="displayed_templates_header_and_helper_icon_wrapper">
+                <h1 id="displayed_templates_header">Your Templates</h1>
+
+                <div class='helper_icon_wrapper'>
+                    <img class='helper_icon' src='/images/helper_icon.png'>
+
+                    <div id='displayed_templates_header_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_bottom'>
+                        <p class="helper_icon_text">Displayed below are links to the courses your saved templates are based 
+                            on. When you click on a course link, you will be taken to that course's page. To add new templates, 
+                            go to any course page and click "Save Template."
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <p id="templates_display_message">Fetching your templates...</p>
+
+            <div id="displayed_templates_wrapper">
+                <div id="displayed_templates"></div>
+            </div>
+        </div>
+    </div>
+
+    <%- include("./alert.ejs") %>
+    <%- include ("./bottom_banner.ejs") %>
+</body>
+</html>

@@ -4,33 +4,209 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="/style/style.css">
+    <link rel="stylesheet" href="/style/create_course.css">
+    <link rel="stylesheet" href="/style/video_lectures.css">
+    <link rel="stylesheet" href="/style/helper_icons.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="scripts/create_course.js" type="application/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.4/dist/js.cookie.min.js"></script>
+    <script src="/scripts/search_users.js" type="application/javascript"></script>
+    <script src="/scripts/create_course.js" type="application/javascript"></script>
+    <script src="/scripts/course_subjects.js" type="application/javascript"></script>
+    <script src="/scripts/helper_icons.js" type="application/javascript"></script>
     <title>Create Course</title>
 </head>
 <body>
-    <form action="create-course" method="post">
-        <label for="course_name">Course Name:</label>
-        <input id="course_name" required name="name" type="text" maxlength="100"
-            value="<%= typeof name !== 'undefined' ? name : '' %>"><br><br>
-        <label for="course_type">Course Type:</label>
-        <select id="course_type" required name="type">
-            <option value="Computing" <% if (typeof type !== 'undefined' && type == "Computing") { %> selected <%}%>>Computing</option>
-            <option value="Art" <% if (typeof type !== 'undefined' && type == "Art") { %> selected <%}%>>Art</option>
-            <option value="Mathematics" <% if (typeof type !== 'undefined' && type == "Mathematics") { %> selected <%}%>>Mathematics</option>
-            <option value="Physics" <% if (typeof type !== 'undefined' && type == "Physics") { %> selected <%}%>>Physics</option>
-            <option value="Chemistry" <% if (typeof type !== 'undefined' && type == "Chemistry") { %> selected <%}%>>Chemistry</option>
-            <option value="Biology" <% if (typeof type !== 'undefined' && type == "Biology") { %> selected <%}%>>Biology</option>
-            <option value="English" <% if (typeof type !== 'undefined' && type == "English") { %> selected <%}%>>English</option>
-            <option value="Other" <% if (typeof type !== 'undefined' && type == "Other") { %> selected <%}%>>Other</option>
-        </select><br><br>
-        <label for="course_description">Course Description:</label>
-        <textarea id="course_description" required name="description" maxlength="1000" rows="5"><%= typeof description !== 'undefined' ? description : '' %></textarea><br><br>
-        <% if (typeof errors != 'undefined') { errors.forEach(function(error) { %>
-            <p class="error_message"><%= error %></p>
-        <% })} %>
-        <button id="course_create_submit_button" type="submit">CREATE COURSE</button>
-    </form>
+    <%- include ("./navbar.ejs"), { current_user } %>
+    <%- include ("./alert.ejs") %>
+    <%- include ("./bottom_banner.ejs") %>
+
+    <div class="small_page_container">
+        <div id="create_course_form_wrapper">
+            <div id="create_course_header_and_helper_icon_wrapper">
+                <h1 id="create_course_header">Create Course</h1>
+
+                <div class='helper_icon_wrapper'>
+                    <img class='helper_icon' src='/images/helper_icon.png'>
+
+                    <div id='create_course_header_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_bottom'>
+                        <p class="helper_icon_text">
+                            On this page you can create a new Studium course. Enter the course's details below. 
+                            Once you have finished, click the "Create Course" button and you will be redirected 
+                            to the newly created course, provided there are no issues with the details you have 
+                            entered. If there are any issues, error messages will be displayed to help you resolve 
+                            them.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form>
+                <div class="create_course_input_wrapper">
+                    <div class="create_course_label_and_helper_icon_wrapper">
+                        <label for="course_title_edit" class="create_course_label">Course Title</label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='create_course_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    Please enter a course title in the text box below.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="course_title_edit" rows="2" placeholder="Enter course title here..."></textarea>
+                    <p id="title_error_message" class="page_error_message"></p>
+                </div>
+
+                <div class="create_course_input_wrapper">
+                    <div class="create_course_label_and_helper_icon_wrapper">
+                        <label for="course_subject_edit" class="create_course_label">Course Subject</label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='create_course_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    Please select a course subject from the dropdown menu below. When you click the 
+                                    dropdown menu, a list of course subject options will be displayed. To set the 
+                                    course's subject, simply click one of those subject options.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <select id="course_subject_edit" name="subject"></select>
+                    <p id="subject_error_message" class="page_error_message"></p>
+                </div>
+
+                <div class="create_course_input_wrapper">
+                    <div class="create_course_label_and_helper_icon_wrapper">
+                        <label for="course_description_edit" class="create_course_label">Course Description</label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='create_course_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    Please enter a course description in the text box below. A description should 
+                                    help give Studium users an idea of what the course's content will be like.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="course_description_edit" name="description" rows="5" placeholder="Enter course description here..."></textarea>
+                    <p id="description_error_message" class="page_error_message"></p>
+                </div>
+
+                <div class="create_course_input_wrapper">
+                    <div class="create_course_label_and_helper_icon_wrapper">
+                        <label for="search_input_staff" class="create_course_label">Add Teachers/Admin</label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='create_course_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    To add a Studium user as a teacher or an admin user, enter their username into 
+                                    the text box below. As you type, search results containing a list of matching 
+                                    users will be displayed. When you click one of these user results, the user will 
+                                    be added as a listed staff member. Checkboxes will allow you to set the user as 
+                                    a teacher and/or an admin user. You can also remove the user with a "Remove" 
+                                    button. At least one admin user is required to be added.<br><br>
+                                    An admin user can add and edit course content. They can also highlight video 
+                                    comments made by students.
+                                    <br><br>
+                                    A teacher who is not also an admin user cannot add or edit course content. However, 
+                                    they can highlight video comments made by students.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="search_input_wrapper_staff" class="search_input_wrapper">
+                        <input id="search_input_staff" class="search_input" type="text" placeholder="Enter staff member's username here...">
+                        <div id="search_results_staff" class="search_results"></div>
+                    </div>
+
+                    <div id='added_users_wrapper_staff' class="added_users_wrapper"></div>
+                    <p id="search_error_message_staff" class="page_error_message"></p>
+                </div>
+
+                <div class="create_course_input_wrapper">
+                    <div id="course_start_date_wrapper">
+                        <div class="create_course_label_and_helper_icon_wrapper">
+                            <label for="course_start_date_edit" class="create_course_label">Course Start Date</label>
+
+                            <div class='helper_icon_wrapper'>
+                                <img class='helper_icon' src='/images/helper_icon.png'>
+            
+                                <div class='create_course_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                    <p class="helper_icon_text">
+                                        Please select a start date for the course. You can either type the date 
+                                        in the format dd/mm/yyyy or select the date from the calendar display. 
+                                        To open the calendar display, click the calendar symbol.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <input id="course_start_date_edit" type="date">
+                        <p id="start_date_error_message" class="page_error_message"></p>
+                    </div>
+                </div>
+
+                <div id="course_publicly_listed_edit_wrapper">
+                    <div class="create_course_checkbox_and_label_and_helper_icon_wrapper">
+                        <input id="course_publicly_listed_edit" class="create_course_checkbox" type="checkbox">
+
+                        <label id="course_publicly_listed_edit_label" for="course_publicly_listed_edit">
+                            Course is publicly listed on Studium
+                        </label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='create_course_checkbox_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    If you check this checkmark, a link to the course's page will be available for 
+                                    Studium users in the All Courses tab and possibly on the homepage.<br><br>If you 
+                                    uncheck this checkmark, users will only be able to visit the course page by 
+                                    entering the course's URL directly into their browser's address bar.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="course_publicly_listed_error_message" class="page_error_message"></p>
+                </div>
+
+                <div id="course_templates_include_content_edit_wrapper">
+                    <div class="create_course_checkbox_and_label_and_helper_icon_wrapper">
+                        <input id="course_templates_include_content_edit" class="create_course_checkbox" type="checkbox">
+
+                        <label id="course_templates_include_content_edit_label" for="course_templates_include_content_edit">
+                            Templates based on this course will include its original content
+                        </label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='create_course_checkbox_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    If you check this checkmark, when a user creates a template based on this course, 
+                                    the course's actual content will be added to the template (e.g., for a block of 
+                                    text, the original text will be included).<br><br>If you uncheck this checkmark, a 
+                                    template based on this course will include the course's page structure but not the 
+                                    actual content of those pages.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="course_templates_include_content_error_message" class="page_error_message"></p>
+                </div>
+
+                <button id="course_create_submit_button" type="button" class="white_button">Create Course</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

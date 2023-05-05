@@ -1,31 +1,17 @@
-// Need:
-// If in teacher mode, can delete comments
-// Note if comment has been edited
-// "Teacher" message indicator
-var video = {}
-var course_id = "";
-var chat_users_details = []
+var current_video = null;
 var current_tab = "questions";
-var replying_to = {}
-var current_user = {}
-var editing_message = false;
-var message_being_edited = {}
-let teachers = []
-let moderators = []
+var comment_being_replied_to = {}
+var current_user = undefined;
+var editing_comment = false;
+var comment_being_edited = {}
+var chat_users_details = [];
  
 /**
  * Function that executes when DOM finishes loading
  */
 $(function() {
-    $("#video_lecture")[0].onplay = function() {
-
-    }
-    let no_messages_html = "<p id='no_chat_messages_message'>Fetching comments...</p>"
+    let no_messages_html = "<p id='no_chat_messages_message'>Fetching comments...</p>";
     $("#chatbox_messages").append(no_messages_html);
-
-    getTeachersAndModerators();
-
-    $("#video_lecture")[0].ontimeupdate = setMessageDisplayType; // On video playtime change, set message display types
 
     $("#questions_tab").click(function() {
         if (!$("#questions_tab").hasClass("active_tab")) {
@@ -52,11 +38,11 @@ $(function() {
             $("#video_lecture")[0].pause();
             displayNewCommentBox();
             if (current_tab === "questions") {
-                $("#add_new_comment_title").html("ASK A QUESTION");
+                $("#add_new_comment_title").html("Ask a Question");
                 $("#add_new_comment_input").attr("placeholder", "Ask a question...");
             }
             else {
-                $("#add_new_comment_title").html("PROVIDE FEEDBACK");
+                $("#add_new_comment_title").html("Provide Feedback");
                 $("#add_new_comment_input").attr("placeholder", "Provide feedback...");
             }
             
@@ -69,7 +55,7 @@ $(function() {
     })
 
     $("#add_new_comment_cancel_button").click(function() {
-        editing_message = false;
+        editing_comment = false;
         hideNewCommentBox();
     })
 
@@ -78,148 +64,29 @@ $(function() {
     })
 
     $("#add_new_reply_submit_button").click(function() {
-        let input = $("#add_new_reply_input").val().trim();
-        if (input.length > 0 && !$.isEmptyObject(current_user) && !$.isEmptyObject(replying_to)) {
-            $("#add_new_reply_error_message").html("");
-
-            var reply = {
-                "author_id": current_user._id,
-                "replying_to": replying_to.author_id,
-                "text": input,
-                "posting_time": Date.now(),
-                "highlighted": false,
-                "vote_count": 0,
-                "upvotes": [],
-                "downvotes": []
-            }
-
-            let comment_id = replying_to._id;
-            let message_obj = getMessageFromID(comment_id);
-            if (message_obj.is_reply) {
-                comment_id = message_obj.recipient._id;
-            }
-
-            addNewReply(comment_id, reply);
-        }
-        else if (input.length === 0) {
-            $("#add_new_reply_error_message").html("<p style='color: red'>Reply cannot be blank</p>");
-        }
-        else {
-            $("#add_new_reply_error_message").html("<p style='color: red'>Something went wrong.</p>");
-        }
+        addNewReply();
     })
 
     $("#add_new_comment_submit_button").click(function() {
-        let input = $("#add_new_comment_input").val().trim();
-        if (input.length > 0) {
-            $("#add_new_comment_error_message").html("");
-            
-            if (!editing_message) {
-                var new_message = {
-                    "author_id": current_user._id,
-                    "text": input,
-                    "timestamp": Math.floor($("#video_lecture")[0].currentTime),
-                    "posting_time": Date.now(),
-                    "highlighted": false,
-                    "vote_count": 0,
-                    "replies": [],
-                    "upvotes": [],
-                    "downvotes": [],
-                    "notify": [
-                        current_user._id
-                    ]
-                }
-    
-                addNewChatMessage(new_message);
-            }
-            else {
-                let message_obj = getMessageFromID(message_being_edited._id);
-                if (message_obj.is_reply) {
-                    updateReplyText(message_obj.recipient._id, message_being_edited._id, input);
-                }
-                else {
-                    updateCommentText(message_being_edited._id, input);
-                }
-            }
-        }
-        else {
-            $("#add_new_comment_error_message").html("<p style='color: red'>Comment cannot be blank</p>");
-        }
+        addOrUpdateComment();
     })
-
-    $("#add_notification_button").click(function() {
-        let message_obj = getMessageFromID("62f04382d9fa41e79dc2266f");
-        if (message_obj !== null && message_obj.recipient._id !== undefined) {
-            addReplyNotification(message_obj);
-        }
-        else {
-            console.log("Reply not found when attempting to notify users of reply");
-        }
-    })
-
-    //$("#chatbox_container").height($("#video_lecture").height());
 })
 
-function getCurrentUser() {
-    $.post("/get_current_user", function(user) {
-        if (!user) {
-            console.log("User not logged in");
-        }
-        else {
-            current_user = user;
-            chat_users_details.push(current_user);
-            setReceiveNotificationsCheckbox();
-        }
+function convertDateToDateWithDashes(date_string) {
+    let date = new Date(date_string);
+    let day = date.getUTCDate();
+    let month = date.getUTCMonth() + 1;
+    let year = date.getUTCFullYear();
 
-        addAllChatMessages()
-    })
-}
-
-function setReceiveNotificationsCheckbox() {
-    if (current_user.enrolled_in.includes(course_id)) {
-        let checkbox_html = '<input type="checkbox" id="receive_question_notifications_checkbox">' +
-        '<label for="receive_question_notifications_checkbox">Receive a notification when a new Question is asked</label>';
-
-        $("#receive_question_notifications_checkbox_container").html(checkbox_html);
-
-        if (video.students_not_receiving_question_notifications) {
-            if (!video.students_not_receiving_question_notifications.includes(current_user._id)) {
-                $("#receive_question_notifications_checkbox").prop("checked", true);
-            }
-        }
-
-        $("#receive_question_notifications_checkbox").change(function() {
-            // If the user isn't logged in, display alert message
-            if (Object.keys(current_user).length === 0) {
-                setAlert("You must be logged in to update your notification preferences", "bad", 3000);
-                return;
-            }
-    
-            let opting_out = !$("#receive_question_notifications_checkbox").prop("checked");
-            updateUserQuestionNotificationPreferences(opting_out);
-        })
-    }
-}
-
-function updateUserQuestionNotificationPreferences(opting_out) {
-    let data = {
-        video_id: video._id,
-        opting_out: opting_out
+    if (day < 10) {
+        day = "0" + day;
     }
 
-    console.log(data);
+    if (month < 10) {
+        month = "0" + month;
+    }
 
-    $.post('/update_user_question_notification_preferences', data, function(res) {
-        if (!res.logged_in) {
-            setAlert("You are not logged in", "bad", 3000);
-        }
-        else if (res.error || !res.video_found) {
-            setAlert("Error updating your notification preferences", "bad", 3000);
-        }
-        else {
-            setAlert("Your notification preferences have been updated", "good", 3000);
-        }
-    })
+    return year + "-" + month + "-" + day;
 }
 
 function makeTimestampsClickable() {
@@ -241,67 +108,18 @@ function makeTimestampsClickable() {
     })
 }
 
-function getTeachersAndModerators() {
-    let url = window.location.href;
-    let course_and_video_ids = url.split("course/")[1];
-    course_id = course_and_video_ids.split("/video/")[0];
-    let data = {
-        course_id: course_id
-    }
-
-    $.post('/get_moderators', data, function(result) {
-        if (result.error) {
-            console.log("Error retrieving teachers and moderators");
-        }
-        else if (!result.course_found) {
-            console.log("Course not found");
-        }
-        else {
-            teachers = result.teachers;
-            moderators = result.moderators;
-        }
-
-        getVideo();
-    })
-}
-
-function getVideo() {
-    let url = window.location.href;
-    let video_id = url.split("video/")[1].split("?")[0];
-    let data = {
-        video_id: video_id
-    }
-
-    $.post('/get_video', data, function(result) {
-        if (result.error) {
-            $("#error_message").val("<p>Sorry, error retrieving video</p>");
-            $("#error_title").val("Error | Studium");
-            $("#error_redirect_form").submit();
-        }
-        else if (!result.video_found) {
-            $("#error_message").val("<p>Video not found</p>");
-            $("#error_title").val("Video Not Found | Studium");
-            $("#error_redirect_form").submit();
-        }
-        else {
-            video = result.video;
-            chat_users_details = result.user_details;
-            document.title = video.title + " | Studium";
-            $("#video_title").html(video.title);
-            $("#video_description").html(video.description);
-            getCurrentUser();
-        }
-    })
-}
-
 function initialiseCommentVoteStatuses() {
+    if (current_video === null) {
+        return;
+    }
+
     let comment_array = []
 
     if (current_tab === "questions") {
-        comment_array = video.questions;
+        comment_array = current_video.questions;
     }
     else if (current_tab === "feedback") {
-        comment_array = video.feedback;
+        comment_array = current_video.feedback;
     }
 
     for (let i = 0; i < comment_array.length; i++) {
@@ -319,152 +137,202 @@ function initialiseCommentVoteStatuses() {
  * Method for adding a new chat message to the chatbox
  * @param {*} message Message to be added
  */
-function addNewChatMessage(message) {
-    $.get('/generate_id', function(new_id) {
-        message._id = new_id;
+function addOrUpdateComment() {
+    if (student_view) {
+        setAlert("You cannot post a comment in student view", "bad", 3000);
+        return;
+    }
 
-        let query = {
-            _id: video._id
-        }
+    let comment_data = {
+        course_id: course._id,
+        page_id: current_page._id,
+        video_link_id: current_video._id,
+        message_tab: current_tab,
+        comment_text: $("#add_new_comment_input").val(),
+        editing_comment: editing_comment
+    }
 
-        let update = {
-            $push: {}
-        }
+    if (editing_comment) {
+        comment_data.comment_id = comment_being_edited._id;
+        comment_data.is_reply = getMessageFromID(comment_being_edited._id).is_reply
+    }
+    else {
+        comment_data.comment_timestamp = $("#video_lecture")[0].currentTime;
+    }
 
-        update.$push[current_tab] = message;
-        let comment_array = []
-    
-        if (current_tab === "questions") {
-            comment_array = video.questions;
-        }
-        else if (current_tab === "feedback") {
-            comment_array = video.feedback;
-        }
-    
-        let options = {
-            new: true
-        }
-    
-        let data = {
-            query: JSON.stringify(query),
-            update: JSON.stringify(update),
-            options: JSON.stringify(options)
-        }
+    console.log(comment_data);
 
-        $.post('/update_video_chat', data, function(res) {
-            if (!res.error) {
-                setAlert("Comment posted", "good", 3000);
-                comment_array.push(message);    // Add new message to chat messages object
-                addAllChatMessages();   // Add all chat messages to chatbox
-                hideNewCommentBox();
+    let data = {
+        comment_data: JSON.stringify(comment_data)
+    }
 
-                if (current_tab === "questions") {
-                    addNewQuestionNotifications();
+    $.post('/add_or_update_chat_comment', data, function(res) {
+        console.log("res:");
+        console.log(res);
+
+        if (res.errors.length > 0) {
+            console.log(res.errors);
+            let comment_error = false;
+            for (let i = 0; i < res.errors.length; i++) {
+                if (res.errors[i].error_type === "comment_error") {
+                    comment_error = true;
+                    $("#add_new_comment_error_message").html(res.errors[i].error_message);
+                    $("#add_new_comment_error_message").css("display", "block");
+                    break;
                 }
             }
-            else {
-                setAlert("Error posting comment", "bad", 3000);
+
+            if (!comment_error) {
+                $("#add_new_comment_error_message").css("display", "none");
+                setAlert(res.errors[res.errors.length - 1].error_message, "bad", 3000);
             }
-        })
-    })
-}
-
-function addNewReply(comment_id, reply) {
-    $.get('/generate_id', function(new_id) {
-        reply._id = new_id;
-
-        let query = {
-            _id: video._id
         }
+        else {
+            let comment_array = [];
 
-        let update = {
-            $push: {}
-        }
+            if (current_tab === "questions") {
+                comment_array = current_video.questions;
+            }
+            else if (current_tab === "feedback") {
+                comment_array = current_video.feedback;
+            }
 
-        query[current_tab + "._id"] = comment_id;
-        update.$push[current_tab + ".$.replies"] = reply;
+            hideNewCommentBox();
 
-        let options = {
-            new: true
-        }
-
-        let data = {
-            query: JSON.stringify(query),
-            update: JSON.stringify(update),
-            options: JSON.stringify(options)
-        }
-
-        $.post('/update_video_chat', data, function(res) {
-            if (!res.error) {
-                setAlert("Reply posted", "good", 3000);
-                hideNewReplyBox();
-                $("#add_new_reply_input").val("");
-                let message_obj = getMessageFromID(comment_id);
-
-                if (message_obj !== null) {
-                    message_obj.comment.replies.push(reply);
+            if (editing_comment) {
+                editing_comment = false;
+                setAlert("Comment updated", "good", 3000);
+                for (let comment_i = 0; comment_i < comment_array.length; comment_i++) {
+                    if (comment_array[comment_i]._id === res.comment._id) {
+                        comment_array[comment_i].text = res.comment.text;
+                        break;
+                    }
+                    else {
+                        for (let reply_i = 0; reply_i < comment_array[comment_i].replies.length; reply_i++) {
+                            if (comment_array[comment_i].replies[reply_i]._id === res.comment._id) {
+                                comment_array[comment_i].replies[reply_i].text = res.comment.text;
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 addAllChatMessages();
+                return;
+            }
 
-                let reply_obj = getMessageFromID(reply._id);
+            setAlert("Comment posted", "good", 3000);
+            comment_array.push(res.comment);    // Add new comment to chat messages object
+            addAllChatMessages();   // Add all chat messages to chatbox
 
-                if (reply_obj !== null) {
-                    addReplyNotification(reply_obj);
+            let notification_data = {
+                course_id: course._id,
+                page_id: current_page._id,
+                video_link_id: current_video._id,
+                comment_id: res.comment._id,
+                message_tab: current_tab
+            }
+
+            $.post('/add_notifications_for_new_chat_comment', notification_data, function(res) {
+                console.log(res);
+                if (res.errors.length > 0) {
+                    res.errors.forEach(function(error) {
+                        console.log(error.error_message);
+                    })
                 }
-            }
-            else {
-                setAlert("Error posting reply", "bad", 3000);
-            }
-        })
+            })
+        }
     })
 }
 
-function deleteReply(orig_comment_id, reply_id) {
-    let query = {
-        _id: video._id
+function addNewReply() {
+    let reply_data = {
+        course_id: course._id,
+        page_id: current_page._id,
+        video_link_id: current_video._id,
+        new_reply_text: $("#add_new_reply_input").val(),
+        comment_being_replied_to: comment_being_replied_to._id,
+        message_tab: current_tab
     }
 
-    let update = {
-        $pull: {}
-    }
+    $.post('/add_new_chat_reply', reply_data, function(res) {
+        if (res.errors.length > 0) {
+            console.log(res.errors);
+            let reply_error = false;
 
-    let options = {
-        new: true
-    }
+            res.errors.forEach(function(error) {
+                if (error.error_type === "reply_error") {
+                    reply_error = true;
+                    $("#add_new_reply_error_message").html(error.error_message);
+                    $("#add_new_reply_error_message").css("display", "block");
+                }
+            })
 
-    query[current_tab + "._id"] = orig_comment_id;
-    update.$pull[current_tab + ".$.replies"] = {
-        _id: reply_id
-    }
-
-    let comment_array = []
-
-    if (current_tab === "questions") {
-        comment_array = video.questions;
-    }
-    else if (current_tab === "feedback") {
-        comment_array = video.feedback;
-    }
-
-    let data = {
-        query: JSON.stringify(query),
-        update: JSON.stringify(update),
-        options: JSON.stringify(options)
-    }
-
-    $.post('/update_video_chat', data, function(res) {
-        if (!res.error) {
-            setAlert("Reply deleted", "good", 3000);
-            let comment_index = getMessageIndex(comment_array, orig_comment_id);
-            let reply_index = getMessageIndex(comment_array[comment_index].replies, reply_id);
-            comment_array[comment_index].replies.splice(reply_index, 1);
-            addAllChatMessages();
+            if (!reply_error) {
+                $("#add_new_reply_error_message").css("display", "none");
+                setAlert(res.errors[res.errors.length - 1].error_message, "bad", 3000);
+            }
         }
         else {
-            setAlert("Error deleting reply", "bad", 3000);
+            console.log("no errors");
+            setAlert("Reply posted", "good", 3000);
+            hideNewReplyBox();
+            $("#add_new_reply_input").val("");
+
+            for (let comment_i = 0; comment_i < current_video[current_tab].length; comment_i++) {
+                if (current_video[current_tab][comment_i]._id === comment_being_replied_to._id) {
+                    current_video[current_tab][comment_i].replies.push(res.new_reply);
+                    break;
+                }
+                else {
+                    for (let reply_i = 0; reply_i < current_video[current_tab][comment_i].replies.length; reply_i++) {
+                        if (current_video[current_tab][comment_i].replies[reply_i]._id === comment_being_replied_to._id) {
+                            console.log("Reply found");
+                            current_video[current_tab][comment_i].replies.push(res.new_reply);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            console.log(JSON.parse(JSON.stringify(current_video[current_tab])));
+
+            addAllChatMessages();
+
+            let notification_data = {
+                course_id: course._id,
+                page_id: current_page._id,
+                video_link_id: current_video._id,
+                reply_id: res.new_reply._id,
+                message_tab: current_tab,
+                comment_being_replied_to: comment_being_replied_to._id
+            }
+
+            $.post("/add_notifications_for_new_reply", notification_data, function(res) {
+                console.log(res.errors);
+            })
         }
     })
+}
+
+function getElementPath(element) {
+    let element_path = "top_element";
+    if (current_page.top_element._id !== element._id) {
+        let current_element = current_page.top_element.child;
+        let found = false;
+
+        while (current_element !== null && !found) {
+            element_path += ".child";
+
+            if (current_element._id === element._id) {
+                found = true;
+            }
+
+            current_element = current_element.child;
+        }
+    }
+
+    return element_path;
 }
 
 function getMessageIndex(array, id) {
@@ -477,136 +345,37 @@ function getMessageIndex(array, id) {
     return -1;
 }
 
-function updateCommentText(id, new_text) {
-    let query = {
-        _id: video._id
-    }
-
-    let update = {
-        $set: {}
-    }
-
-    let options = {
-        new: true
-    }
-
-    query[current_tab + "._id"] = id;
-    update.$set[current_tab + ".$.text"] = new_text;
-
+function deleteChatComment(comment_id) {
     let data = {
-        query: JSON.stringify(query),
-        update: JSON.stringify(update),
-        options: JSON.stringify(options)
+        course_id: course._id,
+        page_id: current_page._id,
+        video_link_id: current_video._id,
+        message_tab: current_tab,
+        comment_id: comment_id
     }
 
-    $.post('/update_video_chat', data, function(res) {
-        if (!res.error) {
-            setAlert("Comment text updated", "good", 3000);
-            editing_message = false;
-            let message_obj = getMessageFromID(id);
-
-            if (message_obj !== null) {
-                message_obj.comment.text = new_text;
-            }
-
-            addAllChatMessages();
-            hideNewCommentBox();
+    $.post('/delete_chat_comment', data, function(res) {
+        if (res.errors.length > 0) {
+            setAlert(res.errors[res.errors.length - 1].length, "bad", 3000);
         }
         else {
-            setAlert("Error updating comment text", "bad", 3000);
-        }
-    })
-}
-
-function updateReplyText(comment_id, reply_id, new_text) {
-    let query = {
-        _id: video._id
-    }
-
-    let update = {
-        $set: {}
-    }
-
-    update.$set[current_tab + ".$[comment].replies.$[reply].text"] = new_text;
-
-    let options = {
-        arrayFilters: [
-            {
-                "comment._id": comment_id
-            },
-            {
-                "reply._id": reply_id
-            }
-        ],
-        new: true
-    }
-
-    let data = {
-        query: JSON.stringify(query),
-        update: JSON.stringify(update),
-        options: JSON.stringify(options)
-    }
-
-    $.post('/update_video_chat', data, function(res) {
-        if (!res.error) {
-            editing_message = false;
-            setAlert("Reply text updated", "good", 3000);
-            let message_obj = getMessageFromID(reply_id);
-
-            if (message_obj !== null) {
-                message_obj.comment.text = new_text;
-            }
-
-            addAllChatMessages();
-            hideNewCommentBox();
-        }
-        else {
-            setAlert("Error updating reply text", "bad", 3000);
-        }
-    })
-}
-
-function deleteChatMessage(id) {
-    let query = {
-        _id: video._id
-    }
-
-    let update = {
-        $pull: {}
-    }
-
-    update.$pull[current_tab] = {
-        _id: id
-    }
-
-    let comment_array = []
-
-    if (current_tab === "questions") {
-        comment_array = video.questions;
-    }
-    else if (current_tab === "feedback") {
-        comment_array = video.feedback;
-    }
-
-    let options = {
-        new: true
-    }
-
-    let data = {
-        query: JSON.stringify(query),
-        update: JSON.stringify(update),
-        options: JSON.stringify(options)
-    }
-
-    $.post('/update_video_chat', data, function(res) {
-        if (!res.error) {
             setAlert("Comment deleted", "good", 3000);
-            let comment_index = getMessageIndex(comment_array, id);
-            comment_array.splice(comment_index, 1);
+            let comments = current_video[current_tab];
+            for (let comment_i = 0; comment_i < comments.length; comment_i++) {
+                if (comments[comment_i]._id === comment_id) {
+                    comments.splice(comment_i, 1);
+                    break;
+                }
+                else {
+                    for (let reply_i = 0; reply_i < comments[comment_i].replies.length; reply_i++) {
+                        if (comments[comment_i].replies[reply_i]._id === comment_id) {
+                            comments[comment_i].replies.splice(reply_i, 1);
+                        }
+                    }
+                }
+            }
+
             addAllChatMessages();
-        }
-        else {
-            setAlert("Error deleting comment", "bad", 3000);
         }
     })
 }
@@ -616,10 +385,10 @@ function deleteChatMessage(id) {
  */
 function sortChatMessages() {
     if (current_tab === "questions") {
-        video.questions.sort(sortMessages); // Sort chat messages chronologically
+        current_video.questions.sort(sortMessages); // Sort chat messages chronologically
     }
     else if (current_tab === "feedback") {
-        video.feedback.sort(sortMessages);
+        current_video.feedback.sort(sortMessages);
     }
 }
 
@@ -634,20 +403,26 @@ function clearChatBox() {
  * Add all chat messages to chatbox
  */
 function addAllChatMessages() {
+    if (current_video === null) {
+        return;
+    }
+
     let comment_array = []
 
     if (current_tab === "questions") {
-        comment_array = video.questions;
+        comment_array = current_video.questions;
     }
     else if (current_tab === "feedback") {
-        comment_array = video.feedback;
+        comment_array = current_video.feedback;
     }
 
     clearChatBox();
     sortChatMessages();
 
     if (comment_array.length > 0) {
-        comment_array.forEach(insertChatMessage);
+        comment_array.forEach(function(comment) {
+            insertChatMessage(comment);
+        });
         setMessageDisplayType();    // Set the display types for every message
         makeTimestampsClickable();  // Make timestamps clickable
         makeVoteButtonsClickable(); // Make upvote/downvote buttons clickable
@@ -664,7 +439,7 @@ function addAllChatMessages() {
 
 function addNewQuestionNotifications() {
     let data = {
-        video_id: video._id,
+        video_id: current_video._id,
         question_asker_id: current_user._id,
         course_id: course_id
     }
@@ -683,7 +458,7 @@ function addNewQuestionNotifications() {
 
 function addReplyNotification(reply_obj) {
     let data = {
-        video_id: video._id,
+        video_id: current_video._id,
         recipient_id: reply_obj.recipient._id,
         current_tab: current_tab
     }
@@ -698,60 +473,40 @@ function addReplyNotification(reply_obj) {
     })
 }
 
-function watchComment(message_obj, watch) {
-    let query = {
-        _id: video._id
+function watchComment(comment_id, watch) {
+    if (student_view) {
+        setAlert("You cannot watch a comment in student view", "bad", 3000);
+        return;
     }
 
-    query[current_tab + "._id"] = message_obj.comment._id;
-
-    let update = {
-    }
-
-    if (watch) {
-        update = {
-            $addToSet: {}
-        }
-        update.$addToSet[current_tab + ".$.notify"] = current_user._id;
-    }
-    else {
-        update = {
-            $pull: {}
-        }
-        update.$pull[current_tab + ".$.notify"] = current_user._id;
-    }
-
-    let options = {
-        new: true
+    let info = {
+        course_id: course._id,
+        page_id: current_page._id,
+        video_link_id: current_video._id,
+        message_tab: current_tab,
+        comment_id: comment_id,
+        watch: watch
     }
 
     let data = {
-        query: JSON.stringify(query),
-        update: JSON.stringify(update),
-        options: JSON.stringify(options)
+        info: JSON.stringify(info)
     }
 
-    $.post('/update_video_chat', data, function(res) {
-        if (!res.error) {
+    $.post('/watch_or_unwatch_comment', data, function(res) {
+        if (res.errors.length > 0) {
+            setAlert(res.errors[res.errors.length - 1].error_message, "bad", 3000);
+        }
+        else {
             let new_watch_text = "WATCH";
-            let alert_message = "Comment unwatched";
+            let alert_message = "Comment no longer being watched";
 
             if (watch) {
                 new_watch_text = "UNWATCH";
-                alert_message = "Comment being watched";
+                alert_message = "Comment is now being watched";
             }
 
-            $("#watch_comment_button_" + message_obj.comment._id).html("<b>" + new_watch_text + "</b>");
+            $("#watch_comment_button_" + comment_id).html("<b>" + new_watch_text + "</b>");
             setAlert(alert_message, "good", 3000);
-        }
-        else {
-            let alert_message = "Error unwatching comment";
-
-            if (watch) {
-                alert_message = "Error watching comment";
-            }
-
-            setAlert(alert_message, "bad", 3000);
         }
     })
 }
@@ -763,19 +518,13 @@ function setWatchButtonClickHandlers() {
             return;
         }
 
-        let id = $(this).attr("id").split("watch_comment_button_")[1];
-        let message_obj = getMessageFromID(id);
+        let comment_id = $(this).attr("id").split("watch_comment_button_")[1];
 
-        if (message_obj !== null) {
-            if ($(this).html() === "<b>WATCH</b>") {
-                watchComment(message_obj, true);
-            }
-            else if ($(this).html() === "<b>UNWATCH</b>") {
-                watchComment(message_obj, false);
-            }
-            else {
-                setAlert("An error occurred", "bad", 3000);
-            }
+        if ($(this).html() === "<b>WATCH</b>") {
+            watchComment(comment_id, true);
+        }
+        else if ($(this).html() === "<b>UNWATCH</b>") {
+            watchComment(comment_id, false);
         }
         else {
             setAlert("An error occurred", "bad", 3000);
@@ -785,21 +534,26 @@ function setWatchButtonClickHandlers() {
 
 function setEditButtonClickHandlers() {
     $(".edit_comment_button").click(function() {
-        editing_message = true;
+        if (student_view) {
+            setAlert("You cannot edit a comment in student view", "bad", 3000);
+            return;
+        }
+
+        editing_comment = true;
         let id = $(this).attr("id").split("edit_comment_button_")[1];
 
         let message_obj = getMessageFromID(id);
 
         if (message_obj !== null) {
-            message_being_edited = message_obj.comment;
+            comment_being_edited = message_obj.comment;
             $("#add_new_comment_title").html("EDIT COMMENT");
-            $("#add_new_comment_input").val(message_being_edited.text);
+            $("#add_new_comment_input").val(comment_being_edited.text);
             $("#video_lecture")[0].pause();
             displayNewCommentBox();
             $("#add_new_comment_input").focus();
         }
         else {
-            editing_message = false;
+            editing_comment = false;
             setAlert("Error finding comment", "bad", 3000);
         }
     })
@@ -819,139 +573,112 @@ function hideNewCommentBox() {
  
 function setDeleteButtonClickHandlers() {
     $(".delete_comment_button").click(function() {
-        let id = $(this).attr("id").split("delete_comment_button_")[1];
-        let message_obj = getMessageFromID(id);
-
-        if (message_obj !== null) {
-            if (message_obj.is_reply) {
-                deleteReply(message_obj.recipient._id, message_obj.comment._id);
-            }
-            else {
-                deleteChatMessage(message_obj.comment._id);
-            }
-        }
-        else {
-            setAlert("Error finding comment", "bad", 3000);
-        }
+        let comment_id = $(this).attr("id").split("delete_comment_button_")[1];
+        deleteChatComment(comment_id);
     })
 }
 
 function setHighlightButtonClickHandlers() {
     $(".highlight_comment_button").click(function() {
-        let message_id = $(this).attr("id").split("highlight_comment_button_")[1];
-        let message_obj = getMessageFromID(message_id);
-
-        if (message_obj !== null) {
-            let highlight = $("#highlight_comment_button_" + message_id + "_text").html() === "HIGHLIGHT";
-            highlightComment(message_obj, highlight);
-        }
-        else {
-            setAlert("Error finding comment", "bad", 3000);
-        }
+        let comment_id = $(this).attr("id").split("highlight_comment_button_")[1];
+        let highlight = $("#highlight_comment_button_" + comment_id + "_text").html() === "HIGHLIGHT";
+        highlightComment(comment_id, highlight);
     })
 }
 
-function highlightComment(message_obj, highlight) {
-    let query = {
-        _id: video._id
+function highlightComment(comment_id, highlight) {
+    let highlight_info = {
+        course_id: course._id,
+        page_id: current_page._id,
+        video_link_id: current_video._id,
+        message_tab: current_tab,
+        comment_id: comment_id,
+        highlight: highlight
     }
 
-    let update = {
-        $set: {}
+    let highlight_data = {
+        info: JSON.stringify(highlight_info)
     }
 
-    let options = {
-        new: true
-    }
-
-    if (message_obj.is_reply) {
-        update.$set[current_tab + ".$[comment].replies.$[reply].highlighted"] = highlight;
-
-        options["arrayFilters"] = [
-            {
-                "comment._id": message_obj.recipient._id
-            },
-            {
-                "reply._id": message_obj.comment._id
-            }
-        ]
-    }
-    else {
-        query[current_tab + "._id"] = message_obj.comment._id;
-        update.$set[current_tab + ".$.highlighted"] = highlight;
-    }
-
-    let data = {
-        query: JSON.stringify(query),
-        update: JSON.stringify(update),
-        options: JSON.stringify(options)
-    }
-
-    console.log(data);
-
-    $.post('/update_video_chat', data, function(result) {
-        let highlight_text = "";
-
-        if (!highlight) {
-            highlight_text = "un";
-        }
-
-        if (result.error) {
-            setAlert("Error " + highlight_text + "highlighting comment", "bad", 3000);
+    $.post('/highlight_or_unhighlight_comment', highlight_data, function(res) {
+        if (res.errors.length > 0) {
+            setAlert(res.errors[res.errors.length - 1].error_message, "bad", 3000);
         }
         else {
-            message_obj.comment.highlighted = highlight;
+            let highlight_text = "";
+
+            if (!highlight) {
+                highlight_text = "un";
+            }
+
+            let message_obj = getMessageFromID(comment_id);
+            message_obj.comment.highlighted_by_staff = highlight;
             addAllChatMessages();
             setAlert("Comment " + highlight_text + "highlighted", "good", 3000);
+
+            $.post('/add_highlighted_comment_notification', highlight_data, function(res) {
+                if (res.errors.length > 0) {
+                    console.log(res.errors);
+                }
+                else {
+                    console.log("no errors while adding notification");
+                }
+            })
         }
     })
 }
 
 function setReplyButtonClickHandlers() {
     $(".reply_button").click(function() {
-        if (!$.isEmptyObject(current_user)) {
-            let replying_to_message_id = $(this).attr("id").split("reply_button_")[1];
-            let message_obj = getMessageFromID(replying_to_message_id);
+        if (student_view) {
+            setAlert("You cannot reply to a comment in student view", "bad", 3000);
+            return;
+        }
+        
+        if (current_user !== undefined) {
+            let recipient_comment_id = $(this).attr("id").split("reply_button_")[1];
+            let recipient_comment_obj = getMessageFromID(recipient_comment_id);
 
-            if (message_obj !== null) {
-                replying_to = message_obj.comment;
-            }
-            else {
+            if (recipient_comment_obj === null) {
                 setAlert("Error finding comment", "bad", 3000);
                 return;
             }
-
+            
+            comment_being_replied_to = recipient_comment_obj.comment;
             let username = "(Username Not Found)";
             let avatar_path = "/images/default_avatar.jpg";
-            let orig_message_recipient_username = "";
+            let original_message_recipient_username = "";
+            let recipient_found = false;
 
-            for (let i = 0; i < chat_users_details.length; i++) {
-                if (chat_users_details[i]._id === replying_to.author_id) {
-                    username = chat_users_details[i].username;
-                    avatar_path = chat_users_details[i].avatar_path;
+            for (let i = 0; i < all_users.length; i++) {
+                if (all_users[i]._id === comment_being_replied_to.author_id) {
+                    username = all_users[i].username;
+                    avatar_path = all_users[i].avatar_path;
+                    recipient_found = true;
                 }
 
-                if (message_obj.is_reply) {
-                    if (chat_users_details[i]._id === replying_to.replying_to) {
-                        orig_message_recipient_username = "@" + chat_users_details[i].username;
+                if (recipient_comment_obj.is_reply) {
+                    if (all_users[i]._id === comment_being_replied_to.author_being_replied_to) {
+                        original_message_recipient_username = "@" + all_users[i].username;
                     }
+                }
+
+                if (recipient_found) {
+                    break;
                 }
             }
 
-            let recipient_html = "<div class='avatar_wrapper'><a href='/user/" + replying_to.author_id + "'><img class='avatar' src='" +
+            let recipient_html = "<div class='avatar_wrapper'><a href='/user/" + comment_being_replied_to.author_id + "'><img class='avatar' src='" +
             avatar_path + "'></a></div>" +
             "<div class='message'><div class='message_top_line_wrapper'>" +
-            "<p class='message_top_line'><a class='username_link' href='/user/" + replying_to.author_id + "'><b>@" + username + "</b></a>" +
-            " &middot; <span class='message_posting_time'>" + getLengthOfTime(replying_to.posting_time) + "</span></p>" +
-            "</div><div class='message_bubble'><p class='message_text'><b>" + orig_message_recipient_username + "</b> " + replying_to.text + "</p></div></div>";
+            "<p class='message_top_line'><a class='username_link' href='/user/" + comment_being_replied_to.author_id + "'><b>@" + username + "</b></a>" +
+            " &middot; <span class='message_posting_time'>" + getLengthOfTime(comment_being_replied_to.posting_time) + "</span></p>" +
+            "</div><div class='message_bubble'><p class='message_text'><b>" + original_message_recipient_username + "</b> " + comment_being_replied_to.text + "</p></div></div>";
 
             $("#add_new_reply_recipient_container").html(recipient_html);
             displayNewReplyBox();
             $("#add_new_reply_input").focus();
             $("#video_lecture")[0].pause();
-        }
-        else {
-            setAlert("You must be logged in to reply", "bad", 4000);
         }
     })
 }
@@ -959,12 +686,15 @@ function setReplyButtonClickHandlers() {
 function displayNewReplyBox() {
     $("#pop_up_background").css("display", "inline-block");
     $("#add_new_reply_container").css("display", "inline-block");
+    $("#add_new_reply_error_message").html("");
+    $("#add_new_reply_error_message").css("display", "none");
 }
 
 function hideNewReplyBox() {
     $("#pop_up_background").css("display", "none");
     $("#add_new_reply_container").css("display", "none");
     $("#add_new_reply_error_message").html("");
+    $("#add_new_reply_error_message").css("display", "none");
     $("#add_new_reply_input").val("");
 }
 
@@ -982,131 +712,166 @@ function noChatMessages() {
 
 /**
  * Add a chat message to chatbox
- * @param {*} message Chat message to be added
+ * @param {*} comment Chat message to be added
  */
-function insertChatMessage(message) {
-    // Add each chat message to chat window
-    var show_replies_html = "";
-    replies_count = 0;
-
-    if (message.hasOwnProperty("replies")) {
-        replies_count = message.replies.length;
-
-        if (replies_count > 0) {
-            show_replies_html = "<button class='show_replies_button' id='show_replies_btn_" + message._id + "'>" +
-            "<b id='show_replies_text_" + message._id + "'>" + getShowRepliesText(message._id) + "</b></button>";
+function insertChatMessage(comment) {
+    // Check if the comment author is a staff member
+    let commenter_is_staff = false;
+    for (let i = 0; i < course.staff.length; i++) {
+        if (course.staff[i]._id === comment.author_id) {
+            commenter_is_staff = true;
         }
     }
 
-    let edit_delete_html = "";
+    // Set staff member comment and highlighted comment flairs
+    let staff_member_flair_html = "";
+    let highlighted_comment_flair_html = "";
 
-    if (current_user.hasOwnProperty("_id")) {
-        if (teachers.includes(current_user._id) || moderators.includes(current_user._id)) {
+    if (commenter_is_staff) {
+        staff_member_flair_html = "<p class='flair staff_member_flair'>Staff Member</p>";
+    }
+    else if (comment.highlighted_by_staff) {
+        highlighted_comment_flair_html = "<p class='flair highlighted_comment_flair'>Highlighted By Staff</p>";
+    }
+
+    // Set the Edit, Delete, and Highlight buttons
+    let edit_delete_html = "";
+    if (current_user !== undefined) {
+        if ((is_teacher || is_admin) && !student_view && !commenter_is_staff && comment.author_id !== current_user._id) {
             let highlighted_text = "HIGHLIGHT";
 
-            if (message.highlighted) {
+            if (comment.highlighted_by_staff) {
                 highlighted_text = "UNHIGHLIGHT";
             }
 
             edit_delete_html = 
-            "<button class='highlight_comment_button' id='highlight_comment_button_" + message._id + "'>" +
-                "<b id='highlight_comment_button_" + message._id + "_text'>" + highlighted_text + "</b>" + 
+            "<button class='highlight_comment_button' id='highlight_comment_button_" + comment._id + "'>" +
+                "<b id='highlight_comment_button_" + comment._id + "_text'>" + highlighted_text + "</b>" + 
             "</button>";
         }
 
-        if (message.author_id === current_user._id) {
-            edit_delete_html += "<button class='edit_comment_button' id='edit_comment_button_" + message._id + "'>" +
+        if (comment.author_id === current_user._id && !student_view) {
+            edit_delete_html +=
+            "<button class='edit_comment_button' id='edit_comment_button_" + comment._id + "'>" +
                 "<b>EDIT</b>" +
             "</button>" +
-            "<button class='delete_comment_button' id='delete_comment_button_" + message._id + "'>" + 
+
+            "<button class='delete_comment_button' id='delete_comment_button_" + comment._id + "'>" + 
                 "<b>DELETE</b>" + 
             "</button>";
         }
         else {
             let watch_text = "WATCH";
 
-            if (message.notify.includes(current_user._id)) {
+            if (comment.users_watching_this_comment.includes(current_user._id) && !student_view) {
                 watch_text = "UNWATCH";
             }
                 
-            edit_delete_html += "<button class='watch_comment_button' id='watch_comment_button_" + message._id + "'>" + 
+            edit_delete_html +=
+            "<button class='watch_comment_button' id='watch_comment_button_" + comment._id + "'>" + 
                 "<b>" + watch_text + "</b>" + 
             "</button>";
         }
     }
 
+    // Get usernames and avatar images
     let username = "(Username Not Found)";
+    let author_being_replied_to = "(Username Not Found)";
     let avatar_path = "/images/default_avatar.jpg";
 
-    for (let i = 0; i < chat_users_details.length; i++) {
-        if (chat_users_details[i]._id === message.author_id) {
-            username = chat_users_details[i].username;
-            avatar_path = chat_users_details[i].avatar_path;
-            break;
+    for (let i = 0; i < all_users.length; i++) {
+        if (all_users[i]._id === comment.author_id) {
+            username = all_users[i].username;
+            avatar_path = all_users[i].avatar_path;
+        }
+
+        if (all_users[i]._id === comment.author_being_replied_to) {
+            author_being_replied_to = all_users[i].username;
         }
     }
 
+    // Set comment's upvote/downvote images
     let upvote_img = "/images/upvote_neutral.png";
     let downvote_img = "/images/downvote_neutral.png";
-
-    if (message.upvotes.includes(current_user._id)) {
+    if (comment.upvotes.includes(current_user._id) && !student_view) {
         upvote_img = "/images/upvote.png";
     }
-    else if (message.downvotes.includes(current_user._id)) {
+    else if (comment.downvotes.includes(current_user._id) && !student_view) {
         downvote_img = "/images/downvote.png";
     }
 
-    let highlighted = "";
-    let highlighted_text_html = "";
+    // Set Show Replies Button HTML
+    let show_replies_html = "";
+    let replies_count = 0;
+    if (comment.hasOwnProperty("replies")) {
+        replies_count = comment.replies.length;
 
-    if (message.highlighted) {
-        highlighted = "highlighted";
-        highlighted_text_html = 
-        " <span class='tooltip unselectable'>&#9733;" +
-            "<span class='tooltip_text'>Highlighted by teacher/moderator</span>" +
-        "</span>";
+        if (replies_count > 0) {
+            show_replies_html =
+            "<button class='show_replies_button' id='show_replies_btn_" + comment._id + "'>" +
+                "<b id='show_replies_text_" + comment._id + "'>" + getShowRepliesText(comment._id) + "</b>" +
+            "</button>";
+        }
     }
 
+    // Create comment HTML
     var chatbox_message = 
-    "<div id='message_and_replies_wrapper_" + message._id + "' class='message_and_replies_wrapper not_reached'>" +
-        "<div class='message_wrapper " + highlighted + "'>" +
+    "<div id='message_and_replies_wrapper_" + comment._id + "' class='message_and_replies_wrapper not_reached'>" +
+        "<div id='message_wrapper_" + comment._id + "' class='message_wrapper'>" +
             "<div class='avatar_wrapper'>" +
-                "<a href='/user/" + message.author_id + "'>" +
+                "<a href='/user/" + comment.author_id + "'>" +
                     "<img class='avatar' src='" + avatar_path + "'>" +
                 "</a>" +
             "</div>" +
-            "<div class='message' id='message_" + message._id + "'>" +
+
+            "<div class='message' id='message_" + comment._id + "'>" +
                 "<div class='message_top_line_wrapper'>" +
-                    "<p class='message_top_line'>" + 
-                        "<a class='username_link' href='/user/" + message.author_id + "'>" +
+                    "<p class='message_top_line_left'>" +
+                        "<a class='username_link' href='/user/" + comment.author_id + "'>" +
                             "<b>@" + username + "</b>" +
                         "</a>" + 
                         " &middot; " +
                         "<span class='message_posting_time'>" +
-                            getLengthOfTime(message.posting_time) +
-                        "</span>" +
-                        highlighted_text_html +
-                        "<span class='message_timestamp'>" + 
-                            convertMessageTimestamp(message.timestamp) + 
+                            getLengthOfTime(comment.posting_time) +
                         "</span>" +
                     "</p>" +
-                "</div>" +
-                "<div class='message_bubble'>" +
-                    "<p class='message_text'>" + message.text + "</p>" +
-                "</div>" +
-                "<div class='message_bottom_line'>" +
-                    "<p>" +
-                        "<div id='upvote_button_" + message._id + "' class='vote_button_wrapper upvote_button'>" +
-                            "<img class='vote_button_image' src='" + upvote_img + "'>" +
-                        "</div>" +
-                        "<span class='vote_count'>" +
-                            message.vote_count +
+
+                    "<p class='message_top_line_right'>" +
+                        "<span class='message_timestamp'>" + 
+                            convertMessageTimestamp(comment.timestamp) + 
                         "</span>" +
-                        "<div id='downvote_button_" + message._id + "' class='vote_button_wrapper downvote_button'>" +
+                    "</p>" +
+                "</div>";
+
+    // Add Comment Flairs
+    if (commenter_is_staff || comment.highlighted_by_staff) {
+        chatbox_message +=
+            "<div class='comment_flairs'>" +
+                staff_member_flair_html +
+                highlighted_comment_flair_html +
+            "</div>";
+    }
+
+    chatbox_message +=
+                "<div class='message_bubble'>" +
+                    "<p class='message_text'>" + comment.text + "</p>" +
+                "</div>" +
+                "<div class='message_bottom_line_wrapper'>" +
+                    "<p class='message_bottom_line_left'>" +
+                        "<span id='upvote_button_" + comment._id + "' class='vote_button_wrapper upvote_button'>" +
+                            "<img class='vote_button_image' src='" + upvote_img + "'>" +
+                        "</span>" +
+                        "<span class='vote_count'>" +
+                            calculateVoteCount(comment) +
+                        "</span>" +
+                        "<span id='downvote_button_" + comment._id + "' class='vote_button_wrapper downvote_button'>" +
                             "<img class='vote_button_image' src='" + downvote_img + "'>" +
-                        "</div>" +
+                        "</span>" +
                         edit_delete_html + 
-                        "<button id='reply_button_" + message._id + "' class='reply_button'>" +
+                    "</p>" +
+
+                    "<p class='message_bottom_line_right'>" +
+                        "<button id='reply_button_" + comment._id + "' class='reply_button'>" +
                             "<b>REPLY</b>" +
                         "</button>" +
                     "</p>" +
@@ -1114,45 +879,67 @@ function insertChatMessage(message) {
                 show_replies_html + 
             "</div>" +
         "</div>" +
-        "<div class='replies_and_filler' id='replies_and_filler_" + message._id + "'>" +
+        "<div class='replies_and_filler' id='replies_and_filler_" + comment._id + "'>" +
             "<div class='replies_filler'>" +
             "</div>" +
             "<div class='replies_wrapper'>";
     
     if (replies_count > 0) {
-        message.replies.forEach(function(reply, i) {
+        comment.replies.forEach(function(reply, i) {
+            // Check if commenter is a staff member
+            let replier_is_staff = false;
+            for (let i = 0; i < course.staff.length; i++) {
+                if (course.staff[i]._id === reply.author_id) {
+                    replier_is_staff = true;
+                }
+            }
+
+            // Set staff member comment and highlighted comment flairs
+            let staff_member_flair_html = "";
+            let highlighted_comment_flair_html = "";
+
+            if (replier_is_staff) {
+                staff_member_flair_html = "<p class='flair staff_member_flair'>Staff Member</p>";
+            }
+            else if (reply.highlighted_by_staff) {
+                highlighted_comment_flair_html = "<p class='flair highlighted_comment_flair'>Highlighted By Staff</p>";
+            }
+
             let username = "(Username Not Found)";
             let avatar_path = "/images/default_avatar.jpg";
             let replying_to_username = "";
 
-            for (let i = 0; i < chat_users_details.length; i++) {
-                if (chat_users_details[i]._id === reply.author_id) {
-                    username = chat_users_details[i].username;
-                    avatar_path = chat_users_details[i].avatar_path;
+            for (let i = 0; i < all_users.length; i++) {
+                if (all_users[i]._id === reply.author_id) {
+                    username = all_users[i].username;
+                    avatar_path = all_users[i].avatar_path;
                 }
 
-                if (chat_users_details[i]._id === reply.replying_to) {
-                    replying_to_username = "@" + chat_users_details[i].username;
+                if (all_users[i]._id === reply.author_being_replied_to) {
+                    replying_to_username =
+                    "<a class='username_link' href='/user/" + all_users[i]._id + "'>" +
+                        "@" + all_users[i].username + 
+                    "</a>";
                 }
             }
 
             let upvote_img = "/images/upvote_neutral.png";
             let downvote_img = "/images/downvote_neutral.png";
 
-            if (current_user.hasOwnProperty("_id") && reply.upvotes.includes(current_user._id)) {
+            if (current_user !== undefined && reply.upvotes.includes(current_user._id) && !student_view) {
                 upvote_img = "/images/upvote.png";
             }
-            else if (current_user.hasOwnProperty("_id") && reply.downvotes.includes(current_user._id)) {
+            else if (current_user !== undefined && reply.downvotes.includes(current_user._id) && !student_view) {
                 downvote_img = "/images/downvote.png";
             }
 
             let edit_delete_html = "";
 
-            if (current_user.hasOwnProperty("_id")) {
-                if (teachers.includes(current_user._id) || moderators.includes(current_user._id)) {
+            if (current_user !== undefined) {
+                if ((is_teacher || is_admin) && !student_view) {
                     let highlighted_text = "HIGHLIGHT";
 
-                    if (reply.highlighted) {
+                    if (reply.highlighted_by_staff) {
                         highlighted_text = "UNHIGHLIGHT";
                     }
 
@@ -1164,7 +951,7 @@ function insertChatMessage(message) {
                     "</button>";
                 }
                 
-                if (reply.author_id === current_user._id) {
+                if (reply.author_id === current_user._id && !student_view) {
                     edit_delete_html +=
                     "<button class='edit_comment_button' id='edit_comment_button_" + reply._id + "'>" +
                         "<b>EDIT</b>" +
@@ -1181,21 +968,8 @@ function insertChatMessage(message) {
                 separator_html = "<div class='message_separator'></div>";
             }
 
-            let highlighted = "";
-            let highlighted_text_html = "";
-
-            if (reply.highlighted) {
-                highlighted = "highlighted";
-                highlighted_text_html = 
-                " <span class='tooltip unselectable'>&#9733;" +
-                    "<span class='tooltip_text'>" +
-                        "Highlighted by teacher/moderator" +
-                    "</span>" +
-                "</span>";
-            }
-
             chatbox_message +=
-            "<div class='reply_wrapper " + highlighted + "' id='reply_" + reply._id + "'>" +
+            "<div class='reply_wrapper' id='reply_wrapper_" + reply._id + "'>" +
                 "<div class='avatar_wrapper'>" +
                     "<a href='/user/" + reply.author_id + "'>" +
                         "<img class='avatar' src='" + avatar_path + "'>" +
@@ -1211,26 +985,36 @@ function insertChatMessage(message) {
                             "<span class='posting_time'>" +
                                 getLengthOfTime(reply.posting_time) + 
                             "</span>" +
-                            highlighted_text_html + 
                         "</p>" +
-                    "</div>" +
+                    "</div>";
+
+            // Add Comment Flairs
+            if (replier_is_staff || reply.highlighted_by_staff) {
+                chatbox_message +=
+                    "<div class='comment_flairs'>" +
+                        staff_member_flair_html +
+                        highlighted_comment_flair_html +
+                    "</div>";
+            }
+
+            chatbox_message +=
                     "<div class='message_bubble'>" +
                         "<p class='message_text'>" +
                             "<b>" + replying_to_username + "</b> " + 
                             reply.text + 
                         "</p>" +
                     "</div>" +
-                    "<div class='message_bottom_line'>" +
-                        "<p>" +
-                            "<div id='upvote_button_" + reply._id + "' class='vote_button_wrapper upvote_button'>" +
+                    "<div class='message_bottom_line_wrapper'>" +
+                        "<p class=''>" +
+                            "<span id='upvote_button_" + reply._id + "' class='vote_button_wrapper upvote_button'>" +
                                 "<img class='vote_button_image' src='" + upvote_img + "'>" +
-                            "</div>" +
-                            "<span class='vote_count'>" +
-                                reply.vote_count +
                             "</span>" +
-                            "<div id='downvote_button_" + reply._id + "' class='vote_button_wrapper downvote_button'>" +
+                            "<span class='vote_count'>" +
+                                calculateVoteCount(reply) +
+                            "</span>" +
+                            "<span id='downvote_button_" + reply._id + "' class='vote_button_wrapper downvote_button'>" +
                                 "<img class='vote_button_image' src='" + downvote_img + "'>" +
-                            "</div>" +
+                            "</span>" +
                             edit_delete_html +
                             "<button id='reply_button_" + reply._id + "' class='reply_button'>" +
                                 "<b>REPLY</b>" +
@@ -1252,102 +1036,101 @@ function insertChatMessage(message) {
     $("#chatbox_messages").append(chatbox_message);
 
     if (replies_count > 0) {
-        makeShowRepliesButtonClickable(message._id);
+        makeShowRepliesButtonClickable(comment._id);
     }
 
-    if (checkIfRepliesAreDisplayed(message._id)) {
-        $("#replies_and_filler_" + message._id).css("display", "flex");
+    if (checkIfRepliesAreDisplayed(comment._id)) {
+        $("#replies_and_filler_" + comment._id).css("display", "flex");
     }
     else {
-        $("#replies_and_filler_" + message._id).css("display", "none");
+        $("#replies_and_filler_" + comment._id).css("display", "none");
     }
+}
+
+function calculateVoteCount(message) {
+    return message.upvotes.length - message.downvotes.length;
 }
 
 function makeVoteButtonsClickable() {
     $(".upvote_button").click(function() {
-        if (!$.isEmptyObject(current_user)) {
-            let comment_id = ($(this).attr("id")).split("upvote_button_")[1];
-            updateVote(comment_id, "upvote");
-        }
-        else {
-            setAlert("You must be logged in to vote for a comment", "bad", 5000);
-        }
+        let comment_id = ($(this).attr("id")).split("upvote_button_")[1];
+        updateVote(comment_id, "upvote");
     })
 
     $(".downvote_button").click(function() {
-        if (!$.isEmptyObject(current_user)) {
-            let comment_id = ($(this).attr("id")).split("downvote_button_")[1];
-            updateVote(comment_id, "downvote");
-        }
-        else {
-            setAlert("You must be logged in to vote for a comment", "bad", 5000);
-        }
+        let comment_id = ($(this).attr("id")).split("downvote_button_")[1];
+        updateVote(comment_id, "downvote");
     })
 }
 
-function updateVote(voted_id, vote_type) {
-    let message_obj = getMessageFromID(voted_id);   // Get comment which has been voted on
+function updateVote(comment_id, vote_type) {
+    if (student_view) {
+        setAlert("You cannot update a comment's vote in student view", "bad", 3000);
+        return;
+    }
 
-    if (message_obj !== null) {
-        if (message_obj.comment.upvotes.length === 0) {
-            message_obj.comment.upvotes = [""];
+    let local_comment = undefined;
+
+    for (let comment_i = 0; comment_i < current_video[current_tab].length; comment_i++) {
+        if (current_video[current_tab][comment_i]._id === comment_id) {
+            local_comment = current_video[current_tab][comment_i];
+            break;
         }
-
-        if (message_obj.comment.downvotes.length === 0) {
-            message_obj.comment.downvotes = [""];
-        }
-        
-        let data = {
-            video_id: video._id,
-            message_obj: message_obj,
-            vote_type: vote_type,
-            current_tab: current_tab
-        }
-
-        $.post("/update_comment_vote", data, function(res) {
-            if (res.error) {
-                setAlert("Error updating comment vote", "bad", 3000);
-            }
-            else {
-                if (res.vote_change !== undefined) {
-                    message_obj.comment.vote_count += res.vote_change;
-
-                    if (res.upvoted) {
-                        if (!message_obj.comment.upvotes.includes(current_user._id)) {
-                            message_obj.comment.upvotes.push(current_user._id);
-                        }
-
-                        if (message_obj.comment.downvotes.includes(current_user._id)) {
-                            message_obj.comment.downvotes.splice(message_obj.comment.downvotes.indexOf(current_user._id), 1);
-                        }
-                    }
-                    else if (res.downvoted) {
-                        if (!message_obj.comment.downvotes.includes(current_user._id)) {
-                            message_obj.comment.downvotes.push(current_user._id);
-                        }
-
-                        if (message_obj.comment.upvotes.includes(current_user._id)) {
-                            message_obj.comment.upvotes.splice(message_obj.comment.upvotes.indexOf(current_user._id), 1);
-                        }
-                    }
-                    else {
-                        if (message_obj.comment.upvotes.includes(current_user._id)) {
-                            message_obj.comment.upvotes.splice(message_obj.comment.upvotes.indexOf(current_user._id), 1);
-                        }
-
-                        if (message_obj.comment.downvotes.includes(current_user._id)) {
-                            message_obj.comment.downvotes.splice(message_obj.comment.downvotes.indexOf(current_user._id), 1);
-                        }
-                    }
-
-                    addAllChatMessages();
+        else {
+            for (let reply_i = 0; reply_i < current_video[current_tab][comment_i].replies.length; reply_i++) {
+                if (current_video[current_tab][comment_i].replies[reply_i]._id === comment_id) {
+                    local_comment = current_video[current_tab][comment_i].replies[reply_i];
+                    break;
                 }
             }
-        })
+        }
     }
-    else {
-        setAlert("Error finding comment", "bad", 3000);
+
+    let data = {
+        course_id: course._id,
+        page_id: current_page._id,
+        video_link_id: current_video._id,
+        message_tab: current_tab,
+        comment_id: comment_id,
+        local_comment: JSON.stringify(local_comment),
+        vote_type: vote_type
     }
+
+    console.log(data);
+
+    $.post("/update_comment_vote", data, function(res) {
+        if (res.errors.length > 0) {
+            setAlert(res.errors[res.errors.length - 1].error_message, "bad", 3000);
+        }
+        else {
+            if (vote_type === "upvote") {
+                if (local_comment.upvotes.includes(current_user._id)) {
+                    local_comment.upvotes.splice(local_comment.upvotes.indexOf(current_user._id), 1);
+                }
+                else {
+                    local_comment.upvotes.push(current_user._id);
+                }
+
+                if (local_comment.downvotes.includes(current_user._id)) {
+                    local_comment.downvotes.splice(local_comment.downvotes.indexOf(current_user._id), 1);
+                }
+            }
+            else if (vote_type === "downvote") {
+                if (local_comment.downvotes.includes(current_user._id)) {
+                    local_comment.downvotes.splice(local_comment.downvotes.indexOf(current_user._id), 1);
+                }
+                else {
+                    local_comment.downvotes.push(current_user._id);
+                }
+
+                if (local_comment.upvotes.includes(current_user._id)) {
+                    local_comment.upvotes.splice(local_comment.upvotes.indexOf(current_user._id), 1);
+                }
+            }
+
+            addAllChatMessages();
+        }
+    })
 }
 
 function getShowRepliesText(id) {
@@ -1417,14 +1200,23 @@ function toggleReplies(id) {
     $("#replies_and_filler_" + id).css("display", replies_display);
 }
 
+function setVideoWindowCloseButton() {
+    $("#close_video_window_button").unbind("click");
+    $("#close_video_window_button").click(function() {
+        current_video = null;
+        $("#video_lecture")[0].pause();
+        $("#video_window_wrapper").css("display", "none");
+    })
+}
+
 function getMessageFromID(id) {
     let comment_array = [];
 
     if (current_tab === "questions") {
-        comment_array = video.questions;
+        comment_array = current_video.questions;
     }
     else if (current_tab === "feedback") {
-        comment_array = video.feedback;
+        comment_array = current_video.feedback;
     }
 
     for (let i = 0; i < comment_array.length; i++) {
@@ -1456,14 +1248,18 @@ function getMessageFromID(id) {
  * Method for setting chat message display type based on current playtime
  */
 function setMessageDisplayType() {
+    if (current_video === null) {
+        return;
+    }
+
     var currentTime = $("#video_lecture")[0].currentTime;   // Get current playtime
     let comment_array = []
 
     if (current_tab === "questions") {
-        comment_array = video.questions;
+        comment_array = current_video.questions;
     }
     else if (current_tab === "feedback") {
-        comment_array = video.feedback;
+        comment_array = current_video.feedback;
     }
 
     // Check if display type should be changed for each message, make change

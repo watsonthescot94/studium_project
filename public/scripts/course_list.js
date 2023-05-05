@@ -1,66 +1,66 @@
-var all_courses = []        // Contains every public course
+var all_courses = []        // Contains every retrieved course
 var displayed_courses = []  // Contains every currently displayed course, is sorted/filtered when user chooses
 
 $(function() {
+    $.when(getCurrentUser().done(function() {
+        setBottomBanner();
+    }))
+    
     // Get API URL for retrieving courses
-    let course_url = getAPIURL();
-
-    // Get courses
-    $.get(course_url, function(res) {
+    sortCourseSubjects();
+    addCourseSubjectsToDropdownMenu();
+    let api_url_and_course_type = getAPIURLAndCourseType();
+    $.when(getCourses(api_url_and_course_type.course_url, api_url_and_course_type.course_type).done(function(res) {
+        console.log(res);
         // If an error occurs, display error message
-        if (res.error) {
-            errorMessage(res.error_message);
+        if (res.errors.length > 0) {
+            showCourseDisplayMessage(res.errors[res.errors.length - 1].error_message);
         }
         // Else if no error
         else {
-            // If a courses array was retrieved
-            if (res.courses) {
-                // Initialise course variables
-                all_courses = res.courses;
-                displayed_courses = res.courses;
-                
-                // If courses were found, sort them and display them
-                if (res.courses.length > 0) {
-                    sortNewToOld();
-                    displayCourses();
-                }
-                // If no courses were found, display message
-                else {
-                    noCoursesFound();
-                }
+            // Initialise course variables
+            all_courses = res.courses;
+            displayed_courses = res.courses;
+            
+            // If courses were found, sort them and display them
+            if (res.courses.length > 0) {
+                hideCourseDisplayMessage();
+                displayCourses();
+                handleURLParams();
             }
-            // If a course array was not retrieved, display error message
+            // If no courses were found, display message
             else {
-                let msg = "Error finding courses.";
-                errorMessage(msg);
+                showCourseDisplayMessage("No courses to display");
             }
         }
-    })
+    }))
 
     // Set the sorting dropdown menu's event triggers
-    $("#sort").on('change', function() {
-        // If there are courses to be sorted
+    $("#filter_displayed_courses_by_start_date_dropdown_menu").on('change', function() {
+        filterDisplayedCourses();
+
         if (displayed_courses.length > 0) {
-            switch (this.value) {
-                case "new_to_old":
-                    sortNewToOld();
-                    break;
-                case "old_to_new":
-                    sortOldToNew();
-                    break;
-                default:
-                    sortNewToOld();
-            }
+            hideCourseDisplayMessage();
+            displayCourses();
         }
-        // If there are no courses to be sorted, display message
         else {
-            noCoursesFound();
+            hideDisplayedCourses();
+            showCourseDisplayMessage("No courses to display");
         }
     })
 
     // Set the subject filter's event trigger
-    $("#select_subject").on('change', function(){
-        filterBySubject(this.value);
+    $("#filter_displayed_courses_by_subject_dropdown_menu").on('change', function(){
+        filterDisplayedCourses();
+
+        if (displayed_courses.length > 0) {
+            hideCourseDisplayMessage();
+            displayCourses();
+        }
+        else {
+            hideDisplayedCourses();
+            showCourseDisplayMessage("No courses to display");
+        }
     })
 })
 
@@ -68,67 +68,108 @@ $(function() {
  * Method for getting the URL for the API from which courses will be retrieved
  * @returns API URL
  */
-function getAPIURL() {
+function getAPIURLAndCourseType() {
     // Get pathname
     let url = new URL(window.location.href);
     let pathname = url.pathname;
-    let course_url = "";
+    let response = {
+        course_url: "",
+        course_type: ""
+    }
+
+    if (pathname.charAt(pathname.length - 1) === "/") {
+        pathname = pathname.slice(0, -1);
+    }
     
     // Set the API URL for fetching courses depending on the pathname
     switch (pathname) {
         case "/all-courses":
-            course_url = "/get-all-courses";
+            console.log(" url is /all-courses");
+            response.course_url = "/get_all_courses";
             break;
         case "/my-courses/enrolled-in":
-            course_url = "/get-courses-enrolled-in";
+            response.course_url = "/get_user_courses";
+            response.course_type = "enrolled_in";
             break;
-        case "/my-courses/teaching":
-            course_url = "/get-courses-teaching";
-            break;
-        case "/my-courses/moderating":
-            course_url = "/get-courses-moderating";
+        case "/my-courses/in-charge-of":
+            response.course_url = "/get_user_courses";
+            response.course_type = "courses_in_charge_of";
             break;
         default:
-            course_url = "/get-all-courses";
+            console.log("url not found");
+            response.course_url = "/get-all-courses";
     }
 
-    return course_url;
+    return response;
+}
+
+function getCourses(course_url, course_type) {
+    let course_data = {
+        course_type: course_type
+    }
+    console.log("course_url: " + course_url);
+
+    // Get courses
+    return $.post(course_url, course_data);
 }
 
 /**
  * Method for displaying courses
  */
 function displayCourses() {
-    $("#courses").html("");
+    if (displayed_courses.length > 0) {
+        showDisplayedCourses();
+    }
 
+    let course_html = "";
     // For each course, create HTML with course information included and add it to the page
-    displayed_courses.forEach(function(course) {
-        let course_html = "<div class='course_listing'>" +
-        "<h2><a href='/course/" + course._id + "'>" + course.name + "</a></h2>" +
-        "<p><b>Subject:</b> " + course.type + "</p>" +
-        "<p><b>Description:</b> " + course.description + "</p>" +
+    displayed_courses.forEach(function(course, i) {
+        //let course_listing_position = "";
+
+        if (i % 4 === 0) {
+            let row_margin_class = "";
+            if (i + 3 <= displayed_courses.length - 1) {
+                row_margin_class = "not_bottom_course_listing_row";
+            }
+            course_html += "<div class='course_listing_row " + row_margin_class + "'>";
+        }
+        
+        course_html +=
+        "<div class='course_listing_wrapper'>" +
+            "<a href='/course/" + course._id + "' class='course_listing'>" +
+                "<div class='course_listing_course_title_and_subject_wrapper'>" +
+                    "<h3 class='course_listing_course_title'>" + course.title + "</h3>" +
+                    "<p class='course_listing_course_subject'>" + course.subject + "</p>" +
+                "</div>" +
+
+                "<div class='course_listing_course_start_date_wrapper'>" +
+                    "<div class='divider'></div>" +
+                    "<p class='course_listing_course_start_date_header'><b>Start Date</b>" + 
+                    "<p class='course_listing_course_start_date_text'>" +
+                        convertDateToDayMonthYearString(course.start_date) +
+                    "</p>" +
+                "</div>" +
+            "</a>" +
         "</div>";
 
-        $("#courses").append(course_html);
+        if ((i + 1) % 4 === 0 || i === displayed_courses.length - 1) {
+            course_html += "</div>";
+        }
     })
+
+    $("#displayed_courses").html(course_html);
 }
 
 /**
  * Method for displaying a message when no courses have been found
  */
-function noCoursesFound() {
-    let msg_html = "<p>No courses found.</p>";
-
-    $("#courses").html(msg_html);
+function hideCourseDisplayMessage() {
+    $("#course_display_message").css("display", "none");
 }
 
-/**
- * Method for displaying an error message when there is a fault retrieving courses
- */
-function errorMessage(msg) {
-    let msg_html = "<p>" + msg + "</p>";
-
-    $("#courses").html(msg_html);
+function showCourseDisplayMessage(message) {
+    $("#course_display_message").html(message);
+    $("#course_display_message").css("display", "block");
 }
 
 /**
@@ -138,8 +179,6 @@ function sortNewToOld() {
     displayed_courses.sort(function(a, b) {
         return new Date(b.created) - new Date(a.created);
     })
-
-    displayCourses();
 }
 
 /**
@@ -149,43 +188,91 @@ function sortOldToNew() {
     displayed_courses.sort(function(a, b) {
         return new Date(a.created) - new Date(b.created);
     })
-
-    displayCourses();
 }
 
-/**
- * Method for filtering courses by subject
- * @param {*} subject Subject of courses to be displayed
- */
-function filterBySubject(subject) {
-    // If user has chosen to view courses of all subjects
-    if (subject === "All Subjects") {
-        // All courses will be displayed
-        displayed_courses = all_courses;
-    }
-    // If user is filtering courses by subject
-    else {
-        let new_displayed_courses = [];
+function filterDisplayedCourses() {
+    let subject_filter = $("#filter_displayed_courses_by_subject_dropdown_menu").val();
+    let start_date_filter = $("#filter_displayed_courses_by_start_date_dropdown_menu").val();
+    let new_displayed_courses = [];
+    let filtered = false;
 
-        // Get each course within the chosen subject
+    if (subject_filter !== "All Subjects") {
+        filtered = true;
         all_courses.forEach(function(course) {
-            if (course.type === subject) {
+            if (course.subject === subject_filter) {
                 new_displayed_courses.push(course);
             }
         })
+    }
+    else {
+        all_courses.forEach(function(course) {
+            new_displayed_courses.push(course);
+        })
+    }
 
+    if (start_date_filter !== "All Start Dates") {
+        let courses_to_remove = [];
+        let current_date = new Date();
+        current_date.setHours(6, 0, 0, 0);
+
+        new_displayed_courses.forEach(function(course) {
+            let course_start_date = new Date(course.start_date);
+            course_start_date.setHours(6, 0, 0, 0);
+
+            if (start_date_filter === "Upcoming" && course_start_date <= current_date) {
+                filtered = true;
+                courses_to_remove.push(course._id);
+            }
+            else if (start_date_filter === "Passed" && course_start_date > current_date) {
+                filtered = true;
+                courses_to_remove.push(course._id);
+            }
+        })
+
+        console.log("courses_to_remove");
+        console.log(courses_to_remove);
+
+        if (courses_to_remove.length > 0) {
+            for (let i = new_displayed_courses.length - 1; i > -1; i--) {
+                if (courses_to_remove.includes(new_displayed_courses[i]._id)) {
+                    console.log("removing " + new_displayed_courses[i].title);
+                    new_displayed_courses.splice(i, 1);
+                }
+            }
+        }
+    }
+
+    if (filtered) {
         displayed_courses = new_displayed_courses;
     }
-
-    // Sort courses according to the user's choice
-    $("#sort").trigger('change');
-
-    // If there are courses to display, display them
-    if (displayed_courses.length > 0) {
-        displayCourses();
-    }
-    // If there are no courses to display, display message
     else {
-        noCoursesFound();
+        displayed_courses = all_courses;
     }
+}
+
+function showDisplayedCourses() {
+    $("#displayed_courses_wrapper").css("display", "block");
+}
+
+function hideDisplayedCourses() {
+    $("#displayed_courses_wrapper").css("display", "none");
+}
+
+function handleURLParams() {
+    let query_string = window.location.search;
+    let url_params = new URLSearchParams(query_string);
+    console.log("subject: " + url_params.get("subject"));
+    if (url_params.has("subject") && course_subjects.includes(url_params.get("subject"))) {
+        $("#filter_displayed_courses_by_subject_dropdown_menu").val(url_params.get("subject"));
+        $("#filter_displayed_courses_by_subject_dropdown_menu").trigger("change");
+    }
+}
+
+function addCourseSubjectsToDropdownMenu() {
+    course_subjects.unshift("All Subjects");
+    course_subjects.push("Other");
+    course_subjects.forEach(function(subject) {
+        let option = "<option value='" + subject + "'>" + subject + "</option>";
+        $("#filter_displayed_courses_by_subject_dropdown_menu").append(option);
+    })
 }

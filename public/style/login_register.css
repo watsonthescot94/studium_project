@@ -1,4 +1,4 @@
-#login_form_container {
+#login_form_container, #register_form_container {
     margin: auto;
     width: 60%;
     border-radius: 10px;
@@ -6,20 +6,56 @@
     padding: 20px;
     margin-top: 10px;
     border: 1px solid lightgray;
+    margin-bottom: 50px;
 }
 
-.login_input {
-    width: 60%;
+#register_form_header_and_helper_icon_wrapper, #login_form_header_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
 }
 
-#login_submit_button {
-    margin-top: 15px;
+#register_form_header_helper_icon_text_wrapper, #login_form_header_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(100% - 2px));
 }
 
-#error_messages {
-    margin-top: 15px;
+#login_form_header, #register_form_header {
+    margin: 0px;
 }
 
-#error_messages p {
-    margin-bottom: 0px;
+#login_submit_button_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(-100% - 5px));
+}
+
+.login_input, .register_input {
+    display: block;
+    width: 100%;
+    padding: 5px;
+}
+
+.field_label {
+    display: inline-block;
+}
+
+.field_label_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 5px;
+}
+
+.submit_button_and_helper_icon_wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+.field_label_helper_icon_text_wrapper {
+    transform: translate(-50%, calc(-100% - 7px));
+}
+
+.field_wrapper {
+    margin-bottom: 10px;
+}
+
+#register_submit_button_helper_icon_text_wrapper {
+    transform: translate(-50%, calc(-100% - 5px))
 }

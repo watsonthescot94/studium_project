@@ -1,0 +1,219 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0px;
+    background-color: black;
+}
+
+#course_background {
+    width: 90%;
+    min-height: 100vh;
+    background-color: lightblue;
+    margin: auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#course_and_page_list_and_template_controls_wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 70%;
+    padding: 20px;
+    background-color: lightcoral;
+    margin: auto;
+}
+
+#pages_list_and_template_controls_wrapper {
+    width: 35%;
+    margin-right: 20px;
+}
+
+#course_and_controls_and_page_list_wrapper, #pages_list_wrapper, #template_controls_wrapper,
+#course_details_wrapper, #course_page_wrapper {
+    border-radius: 10px;
+}
+
+#pages_list_wrapper {
+    width: 100%;
+    padding: 10px;
+    background-color: white;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#pages_list_header {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+#pages_list_header h3 {
+    margin: 0px;
+}
+
+#add_page_button {
+    position: absolute;
+    top: 50%;
+    right: 0px;
+    transform:translateY(-50%);
+}
+
+#pages_list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px lightgray solid;
+}
+
+.page_item {
+    padding: 10px;
+}
+
+.unselected_page_item:hover {
+    cursor: pointer;
+    background-color: lightgray;
+    color: black;
+}
+
+.selected_page_item {
+    background-color: black;
+    color: white;
+    cursor: default;
+}
+
+.page_title {
+    margin: 0px;
+    /*white-space: nowrap;*/
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.page_item_divider {
+    height: 1px;
+    width: 100%;
+    background-color: lightgray;
+    margin: auto;
+}
+
+#page_item_controls {
+    margin-top: 10px;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: white;
+    color: black;
+    cursor: default;
+}
+
+#page_visible_checkbox_and_label_wrapper {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 10px;
+}
+
+#page_visible_checkbox_wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+#page_visible_checkbox_wrapper input {
+    margin-left: 0px;
+}
+
+#delete_page_button_wrapper {
+    display: flex;
+    justify-content: right;
+}
+
+#delete_page_button {
+    cursor: pointer;
+}
+
+#page_visible_label_wrapper {
+    margin-left: 5px;
+}
+
+#pages_list_course_details_connector {
+    width: 20px;
+    height: 1px;
+    background-color: black;
+    position: absolute;
+    top: 50%;
+    right: -20px;
+}
+
+#pages_list_template_controls_connector, #course_details_course_page_connector {
+    height: 20px;
+    width: 1px;
+    background-color: black;
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+}
+
+#template_controls_wrapper {
+    width: 100%;
+    padding: 10px;
+    background-color: white;
+}
+
+#template_controls_wrapper p {
+    margin: 0px;
+}
+
+#template_controls_header {
+    margin-bottom: 10px;
+}
+
+#template_controls_header h3 {
+    margin: 0px;
+}
+
+#template_course_name_wrapper {
+    margin-bottom: 10px;
+}
+
+#template_control_buttons {
+    margin-bottom: 10px;
+}
+
+#template_control_buttons button {
+    padding: 5px;
+}
+
+#select_new_template_wrapper {
+    margin-bottom: 10px;
+}
+
+#show_template_checkbox_wrapper, #show_template_content_checkbox_wrapper {
+    position: relative;
+}
+
+#show_template_checkbox_wrapper label, #show_template_content_checkbox_wrapper label {
+    margin-left: 5px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-55%);
+}
+
+
+
+
+#course_details_and_page_wrapper {
+    width: 65%;
+}
+
+#course_details_wrapper {
+    width: 100%;
+    height: 600px;
+    background-color: white;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#course_page_wrapper {
+    width: 100%;
+    height: 900px;
+    background-color: white;
+}

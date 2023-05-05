@@ -1,35 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style/navbar.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/scripts/notifications.js" type="application/javascript"></script>
-</head>
-<body>
-    <div class="navbar">
-        <a href="/" class="left_link">Home</a>
-        <a href="/all-courses" class="left_link">All Courses</a>
-        <div class="dropdown left_link">
-          <button class="dropbtn">My Courses
-          </button>
-          <div class="dropdown-content">
-            <a href="/my-courses/teaching">Courses I'm Teaching</a>
-            <a href="/my-courses/enrolled-in">Courses I'm Enrolled In</a>
-            <a href="/my-courses/moderating">Courses I'm Moderating</a>
+<link rel="stylesheet" href="/style/navbar.css">
+<link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="/scripts/get_all_users.js" type="application/javascript"></script>
+<script src="/scripts/get_current_user.js" type="application/javascript"></script>
+<script src="/scripts/notifications.js" type="application/javascript"></script>
+<script src="/scripts/get_length_of_time.js" type="application/javascript"></script>
+
+<div class="navbar">
+  <div id="left_navbar_links">
+    <a href="/" class="navbar_link">Home</a>
+    <a href="/all-courses" class="navbar_link">All Courses</a>
+    <% if (typeof current_user !== 'undefined') { %>
+      <div id="my_courses_link" class="navbar_link dropdown_link">My Courses
+        <div id="my_courses_dropdown_menu" class="dropdown_menu">
+          <a href="/my-courses/in-charge-of" class="dropdown_menu_link">Courses I'm In Charge Of</a>
+          <a href="/my-courses/enrolled-in" class="dropdown_menu_link">Courses I'm Enrolled In</a>
+        </div>
+      </div>
+      <a href="/my-templates" class="navbar_link">My Templates</a>
+    <% } %>
+  </div>
+
+  <div id="right_navbar_links">
+    <% if (typeof current_user !== 'undefined') { %>
+      <a href="/create-course" class="navbar_link">Create Course</a>
+      <a href="/user/<%=current_user._id%>" class="navbar_link">My Profile</a>
+      <a href="/logout" class="navbar_link">Log Out</a>
+
+      <div id="notifications_link" class="navbar_link dropdown_link">
+        <div id="notifications_icon_wrapper">
+          <img src="/images/notification_icon.png" id="notifications_icon">
+          <div id="notifications_count_icon_wrapper">
+            <p id="notifications_count_icon_text"></p>
           </div>
         </div>
-        <a href="/my-templates" class="left_link">My Templates</a>
-        <% if (typeof user !== 'undefined') { %>
-          <a href="/notifications" class="right_link">Notifications <span id="notification_count">(?)</span></a>
-          <a href="/logout" class="right_link">Log Out</a>
-          <a href="/user/<%=user._id%>" class="right_link">My Profile</a>
-        <% } else { %>
-          <a href="/register" class="right_link">Register</a>
-          <a href="/login" class="right_link">Login</a>
-        <% } %>
+        
+        <div id="notifications_wrapper" class="dropdown_menu">
+          <div id="notifications_header">
+            <h3>Notifications <span id="notification_count"></span></h3>
+          </div>
+          <div id="notifications_list"></div>
+        </div>
       </div>
-</body>
-</html>
+    <% } else { %>
+      <a href="/login" class="navbar_link">Login</a>
+      <a href="/register" class="navbar_link">Register</a>
+    <% } %>
+  </div>
+</div>

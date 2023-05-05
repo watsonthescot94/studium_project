@@ -1,22 +1,3 @@
-/** Scrollbar styling customised from:
-    https://www.w3schools.com/howto/howto_css_custom_scrollbar.asp **/
-    
-::-webkit-scrollbar {
-    width: 10px
-}
-  
-::-webkit-scrollbar-track {
-background: #f1f1f1; 
-}
-
-::-webkit-scrollbar-thumb {
-background: #888; 
-}
-
-::-webkit-scrollbar-thumb:hover {
-background: #555; 
-}
-
 .reached {
     opacity: 1;
 }
@@ -34,20 +15,32 @@ background: #555;
 }
 
 #video_title {
-    margin: 0px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-#video_chatbox_container {
+#video_description {
+    margin-top: 10px;
+    padding-bottom: 10px;
+}
+
+#video_and_chatbox_container_border {
+    height: 100%;
+    width: 100%;
+    border: 1px solid grey;
+}
+
+#video_and_chatbox_container {
     display: flex;
     flex-direction: row;
-    margin-left: 20px;
-    margin-right: 20px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    height: 100%;
+    padding: 10px;
+    background-color: rgb(234, 234, 234);
+    overflow-y: auto;
 }
 
 #video_container {
-    flex: 2;
+    flex: 65%;
 }
 
 #video_lecture {
@@ -56,13 +49,13 @@ background: #555;
 
 #chatbox_container {
     background-color: white;
-    flex: 1;
+    flex: 35%;
     display: flex;
     flex-direction: column;
     margin-left: 20px;
     border-radius: 10px;
     border: 1px solid gray;
-    height: 80vh;
+    height: 90%;
 }
 
 #chatbox_messages {
@@ -76,7 +69,6 @@ background: #555;
 }
 
 .message_and_replies_wrapper {
-    box-sizing: border-box;
     width: 100%;
     padding: 1px 10px;
     background-color: white;
@@ -101,19 +93,20 @@ background: #555;
     flex-direction: row;
     margin-left: -10px;
     margin-right: -10px;
+    overflow-x: hidden;
 }
 
 .avatar_wrapper {
-    flex: 1;
+    flex: 10%;
+    min-width: 10%;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 .avatar {
     width: 100%;
     border-radius: 50%;
     margin-top: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
-    object-fit: cover
 }
 
 #no_chat_messages_message {
@@ -121,15 +114,22 @@ background: #555;
 }
 
 .message {
-    flex: 10;
-    margin-left: 20px;
+    flex: 90%;
+    margin-left: 0px;
     margin-right: 10px;
     margin-top: 10px;
 }
 
-.message_top_line {
+.message_top_line_wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     margin-top: 0px;
     margin-bottom: 5px;
+}
+
+.message_top_line_right {
+    margin-left: 10px;
 }
 
 .username_link {
@@ -154,6 +154,7 @@ background: #555;
     background-color: #efefef;
     border-radius: 10px;
     padding: 10px;
+    margin-top: 5px;
     margin-bottom: 0px;
 }
 
@@ -161,10 +162,48 @@ background: #555;
     margin: 0px;
 }
 
-.message_bottom_line {
-    position: relative;
+.message_bottom_line_wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 5px;
     margin-bottom: 5px;
+}
+
+.message_bottom_line_right {
+    display: flex;
+    margin-left: 10px;
+    align-items: center;
+}
+
+.message_bottom_line_left {
+    display: flex;
+    align-items: center;
+}
+
+.vote_button_wrapper {
+    display: inline-block;
+    width: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.vote_button_image {
+    width: 100%;
+}
+
+.vote_count {
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
+.reply_button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: black;
+    padding: 5px;
 }
 
 .replies_and_filler {
@@ -188,10 +227,6 @@ background: #555;
     flex-direction: row;
 }
 
-p, button, h1, h2 {
-    font-family: 'Open Sans', sans-serif;
-}
-
 p {
     margin: 0px;
 }
@@ -205,24 +240,15 @@ p {
 }
 
 
-/*#new_message_textbox_container {
-    padding: 10px;
-    display: flex;
-    flex-direction: row;
-    height: 10%;
-} */
-
 #new_message_textbox {
     flex: 5;
     height: 50%;
     outline: none;
-    box-sizing: border-box;
 }
 
 #new_message_btn {
     flex: 1;
     height: 50%;
-    box-sizing: border-box;
 }
 
 #pop_up_background {
@@ -231,7 +257,7 @@ p {
     width: 100%;
     height: 100%;
     position: fixed;
-    z-index: 1;
+    z-index: 2;
 }
 
 #add_new_comment_container, #add_new_reply_container {
@@ -242,9 +268,8 @@ p {
     top: 50%;
     width: 33.3%;
     transform:translate(-50%, -50%);
-    padding: 20px;
+    padding: 10px;
     border-radius: 10px;
-    margin-top: 20px;
 }
 
 #add_new_comment_title {
@@ -253,18 +278,18 @@ p {
 
 #add_new_comment_input, #add_new_reply_input {
     width: 100%;
-    box-sizing: border-box;
-    padding: 10px;
+    padding: 5px;
+    margin-bottom: 10px;
 }
 
-button, input[type=button] {
-    background-color: black;
-    color: white;
+#add_new_reply_recipient_container {
+    width: 100%;
+    border: 2px solid gray;
     border-radius: 5px;
-    cursor: pointer;
-    transition-duration: 0.4s;
+    margin: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
     padding: 10px;
-    border-style: none;
 }
 
 .show_replies_button {
@@ -276,18 +301,6 @@ button, input[type=button] {
     padding: 5px;
 }
 
-.reply_button {
-    cursor: pointer;
-    background: none;
-    border: none;
-    color: black;
-    padding: 5px;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    right: 0;
-}
-
 .highlighted {
     background-color: rgb(255, 255, 171);
 }
@@ -296,7 +309,7 @@ button, input[type=button] {
     position: relative;
 }
 
-.tooltip_text {
+/*.tooltip_text {
     visibility: hidden;
     background-color: black;
     color: white;
@@ -313,24 +326,7 @@ button, input[type=button] {
 
 .tooltip:hover .tooltip_text {
     visibility: visible
-}
-
-.vote_button_wrapper {
-    display: inline-block;
-    width: 3%;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 5px;
-}
-
-.vote_button_image {
-    width: 100%;
-}
-
-.vote_count {
-    margin-left: 3px;
-    margin-right: 3px;
-}
+}*/
 
 .edit_comment_button, .delete_comment_button, .highlight_comment_button, .watch_comment_button {
     cursor: pointer;
@@ -344,6 +340,7 @@ button, input[type=button] {
 .edit_comment_button:hover, .delete_comment_button:hover, .watch_comment_button:hover, .show_replies_button:hover, 
 .reply_button:hover, .highlight_comment_button:hover, .vote_button_wrapper:hover {
     background-color: rgb(235, 233, 233);
+    border-radius: 5px;
 }
 
 #main {
@@ -351,6 +348,7 @@ button, input[type=button] {
 }
 
 #add_new_comment_error_message, #add_new_reply_error_message {
+    display: none;
     margin-bottom: 10px;
 }
 
@@ -360,32 +358,6 @@ button, input[type=button] {
 
 .half_opacity {
     opacity: 0.5
-}
-
-#add_new_reply_recipient_container {
-    width: 100%;
-    border: 2px solid gray;
-    border-radius: 5px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-#alert_message_container {
-    opacity: 0;
-    padding: 10px;
-    position: fixed;
-    bottom: 15px;
-    left: 50%;
-    background-color: #228B22;
-    transform:translateX(-50%);
-    box-shadow: 5px 5px 5px black;
-    border-radius: 5px;
-}
-
-#alert_message {
-    color: white;
 }
 
 #tabs_container {
@@ -452,11 +424,35 @@ button, input[type=button] {
     user-select: none;
 }
 
+#add_new_comment_button_wrapper {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
 #add_new_comment_button {
-    margin: 10px;
+    width: 100%;
+    cursor: pointer;
+    background-color: white;
+    font-weight: bold;
+    padding: 3px 5px;
+    border-radius: 5px;
+}
+
+#add_new_comment_button:hover {
+    background-color: rgb(239, 239, 239);
 }
 
 body {
     margin: 0px;
     background-color: #DDDDDD;
+}
+
+.staff_member_flair {
+    background-color: darkgreen;
+    color: white;
+}
+
+.highlighted_comment_flair {
+    background-color: yellow;
+    color: black;
 }

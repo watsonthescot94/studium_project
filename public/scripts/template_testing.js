@@ -4,8 +4,15 @@ var current_template;   // The template page currently being viewed
 var template_displayed = true;  // Indicates if the course's template is being displayed
 var template_content_displayed = true;  // Indicates if the template's content is currently being displayed
 var is_teacher = true;  // Indicates if user is a teacher on the current course
-var user_view = false;  // Indicates if user is viewing the page from a user's perspective
+var student_view = false;  // Indicates if user is viewing the page from a user's perspective
 var open_editors = [];
+
+var videos_and_thumbnails = [
+    {
+        video_src: "/videos/mary berry.mp4",
+        thumbnail: "/images/kurt_cobain.jpg"
+    }
+]
 
 $(function() {
     current_page = course.pages[0]; // Set current page
@@ -15,18 +22,294 @@ $(function() {
     displayPageContent(template.pages[0], true);
     setPageDropdownMenu(course.pages, false);
     setPageDropdownMenu(template.pages, true);
-    setTemplateCheckboxes();
+    setTeacherControls();
+    
+    //https://usefulangle.com/post/46/javascript-get-video-thumbnail-image-jpeg-png
+        
+    window.onresize = function() {
+        onResize();
+    }
 })
 
+function onResize() {
+    setVideoHeight();
+}
+
+function setVideoHeight() {
+    $(".video_link_poster_wrapper").each(function() {
+        let video_width = $(this).css("width").split("px")[0];
+        let video_height = video_width * 0.56;
+        $(this).css("height", video_height);
+    })
+
+    $(".video_link_editor_poster_wrapper").each(function() {
+        let video_width = $(this).css("width").split("px")[0];
+        let video_height = video_width * 0.56;
+        $(this).css("height", video_height);
+    })
+}
+
+function getVideoLink(video) {
+    let id_no = video._id.replaceAll("<br>", " <br> ").split("video_link_")[1];
+    let reduced_description_array = getReducedDescription(video.description);
+    let was_reduced = reduced_description_array[0];
+    let description = reduced_description_array[1];
+    let show_more_button_text = "";
+
+    if (was_reduced) {
+        show_more_button_text = "+ Read more";
+    }
+
+    let video_link_html =
+    "<fieldset id='video_link_wrapper_" + id_no + "' class='video_link_wrapper page_element'>" +
+        "<legend class='legend'>Video Link</legend>" +
+
+        "<div id='video_link_poster_wrapper_" + id_no + "' class='video_link_poster_wrapper'>" +
+            "<img src='" + video.poster + "' class='video_link_poster'>" +
+            "<img src='/images/play_symbol.png' class='video_link_poster_play_symbol'>" +
+        "</div>" +
+
+        "<div id='video_link_text_wrapper_" + id_no + "' class='video_link_text_wrapper'>" +
+            "<h2 id='video_link_title_" + id_no + "'>" + video.title + "</h2>" +
+            "<p><b>Video Duration: </b><span id='video_duration_" + id_no + "'" + "</span></p>" +
+            "<p id='video_link_description_" + id_no + "' class='video_link_description'><b>Description: </b>" + description + "</p>" +
+            "<a id='show_more_button_" + id_no + "' class='show_more_button'>" + show_more_button_text + "</a>" +
+        
+            "<div class='divider'></div>" +
+
+            "<input id='edit_element_button_video_link_wrapper_" + id_no + "' class='edit_element_button' type='button' value='Edit'></input>" +
+            "<input id='delete_element_button_video_link_wrapper_" + id_no + "' class='delete_element_button' type='button' value='Delete'></input>" +
+            "<input id='move_element_up_button_video_link_wrapper_" + id_no + "' class='move_element_up_button' type='button' value='Move Up'></input>" +
+            "<input id='move_element_down_button_video_link_wrapper_" + id_no + "' class='move_element_down_button' type='button' value='Move Down'></input>" +
+        "</div>" +
+
+        "<video id='temp_video_" + id_no + "' class='temp_video'>" +
+            "<source id='temp_video_source_" + id_no + "' src='" + video.video_src + "'></source>" +
+        "</video>" +
+    "</fieldset>"
+
+    return video_link_html;
+}
+
+function addEventListenersToTempVideos() {
+    $(".temp_video").each(function() {
+        $(this)[0].addEventListener('loadedmetadata', function() {
+            let id_no = $(this).attr("id").split("temp_video_")[1];
+            let duration = convertMillisecondsToHoursMinutesSeconds($(this)[0].duration);
+            $("#video_duration_" + id_no).html(duration);
+        })
+    })
+}
+
+function setShowMoreButtons() {
+    $(".show_more_button").each(function() {
+        let id_no = $(this).attr("id").split("show_more_button_")[1];
+        if ($(this).html() === "+ Read more") {
+            $("#video_link_description_" + id_no)
+                .css("-webkit-mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 30%)")
+                .css("mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 30%)")
+        }
+        else {
+            $("#video_link_description_" + id_no)
+                .css("-webkit-mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 0%)")
+                .css("mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 0%)")
+        }
+    })
+
+    $(".show_more_button").unbind("click");
+
+    $(".show_more_button").click(function() {
+        let id_no = $(this).attr("id").split("show_more_button_")[1];
+
+        let description = "";
+        let found = false;
+        let current_element = current_page.top_element;
+
+        while (current_element !== null && !found) {
+            if (current_element._id === "video_link_" + id_no) {
+                description = current_element.description;
+                found = true;
+            }
+
+            current_element = current_element.child;
+        }
+
+        if (!found) {
+            description = "Description not found";
+        }
+
+        if ($(this).html() === "+ Read more") {
+            $("#video_link_description_" + id_no).html(
+                "<b>Description: </b>" + description
+            )
+            .css("-webkit-mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 0%)")
+            .css("mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 0%)")
+            $(this).html("- Read less");
+        }
+        else {
+            $("#video_link_description_" + id_no).html(
+                "<b>Description: </b>" + getReducedDescription(description)[1]
+            )
+            .css("-webkit-mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 30%)")
+            .css("mask-image", "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 30%)")
+            $(this).html("+ Read more");
+        }
+    })
+}
+
+function getVideoLinkEditor(video) {
+    let id_no = video._id.split("video_link_")[1];
+    let img_src = "/images/default_image.jpg";
+
+    let video_link_editor_html =
+    "<fieldset id='video_link_editor_wrapper_" + id_no + "' class='video_link_editor_wrapper page_element_editor'>" +
+        "<legend class='legend'>Video Editor</legend>" +
+
+        "<div id='video_link_editor_poster_wrapper_" + id_no + "' class='video_link_editor_poster_wrapper'>" +
+            "<img id='video_link_editor_poster_" + id_no + "' class='video_link_editor_poster' src='" + img_src + "'>" +
+        "</div>" +
+
+        "<div id='video_link_editor_video_dropdown_wrapper_" + id_no + "' class='video_link_editor_video_dropdown_wrapper'>" +
+            "<p class='editor_header'>Video File</p>" +
+            "<select id='video_link_editor_video_dropdown_" + id_no + "' class='video_link_editor_video_dropdown'>" +
+                "<option value='Select a Video File'>Select a Video File</option>" +
+                "<option value='/videos/mary berry.mp4'>mary berry.mp4</option>" +
+                "<option value='/videos/doesnt_exist.mp4'>doesn't_exist.mp4</option>" +
+                "<option value='/videos/it_never_happened.mp4'>it_never_happened.mp4</option>" +
+            "</select>" +
+        "</div>" +
+
+        "<div id='video_link_editor_title_wrapper_" + id_no + "'>" +
+            "<p class='editor_header'>Video Title</p>" +
+            "<textarea id='video_link_editor_title_textarea_" + id_no + "' class='video_link_editor_title_textarea' " +
+                "placeholder='Enter video title here...' rows='3'>" +
+            "</textarea>" +
+            "<p class='word_character_counts'><span id='video_title_word_count_" + id_no + "'></span> words | " +
+                "<span id='video_title_character_count_" + id_no + "'></span> characters" +
+            "</p>" +
+        "</div>" +
+
+        "<div id='video_link_editor_description_wrapper_" + id_no + "'>" +
+            "<p class='editor_header'>Video Description</p>" +
+            "<textarea id='video_link_editor_description_textarea_" + id_no + "' " +
+                "class='video_link_editor_description_textarea' placeholder='Enter video description here...' rows='10'>" +
+            "</textarea>" +
+            "<p class='word_character_counts'><span id='video_description_word_count_" + id_no + "'></span> words | " +
+                "<span id='video_description_character_count_" + id_no + "'></span> characters" +
+            "</p>" +
+        "</div>" +
+
+        "<div class='divider'></div>" +
+        "<input id='save_edit_element_button_video_link_wrapper_" + id_no + "' type='button' class='save_edit_element_button' value='Save'>" +
+        "<input id='cancel_edit_element_button_video_link_wrapper_" + id_no + "' class='cancel_edit_element_button' type='button' value='Cancel'></input>" +
+    "</fieldset>"
+
+    return video_link_editor_html;
+}
+
+function getReducedDescription(text) {
+    let text_array = text.replaceAll("<br>", " <br> ").split(" ");
+    let was_reduced = false;
+
+    if (text_array.length > 50) {
+        was_reduced = true;
+        text = "";
+
+        for (let i = 0; i < 50; i++) {
+            if (i === 48 && text_array[i] === "<br>" && text_array[i + 1] === "<br>") {
+                break;
+            }
+
+            if (i !== 0) {
+                text += " ";
+            }
+
+            text += text_array[i];
+        }
+    }
+
+    return [was_reduced, text]
+}
+
+var videos = [
+    {
+        _id: "kurt_cobain",
+        src: "/videos/mary berry.mp4",
+        title: "Kurt Cobain",
+        poster: "/images/kurt_cobain.jpg",
+        description: "Kurt Donald Cobain (February 20, 1967 - c. April 5, 1994) was an American musician who was the " +
+        "founder, lead vocalist, guitarist and primary songwriter of the rock band Nirvana. Through his angst-fueled " +
+        "songwriting and anti-establishment persona, Cobain's compositions widened the thematic conventions of mainstream " +
+        "rock. He was heralded as a spokesman of Generation X and is highly recognized as one of the most influential " +
+        "alternative rock musicians."
+    }
+]
+
+var video_files = [
+    "/videos/mary berry.mp4",
+    "/videos/not_actually_a_video.mp4",
+    "/videos/doesnt_exist.mp4"
+]
+
+function convertMillisecondsToHoursMinutesSeconds(milliseconds) {
+    let total_secs = Math.floor(milliseconds);
+    let hrs = Math.floor(total_secs / 3600);
+    let mins = Math.floor((total_secs - (hrs * 3600)) / 60);
+    let secs = (total_secs - (hrs * 3600) - (mins * 60));
+
+    if (mins < 10) {
+        mins = "0" + mins;
+    }
+
+    if (secs < 10) {
+        secs = "0" + secs;
+    }
+
+    let converted_time = mins + ":" + secs;
+
+    if (hrs > 0) {
+        if (hrs < 10) {
+            hrs = "0" + hrs;
+        }
+        converted_time = hrs + ":" + converted_time;
+    }
+    
+    return converted_time;
+}
+
+/**
+ * Method for setting the event handlers (e.g., button presses, text input) for each element
+ */
+function setElementEventHandlers() {
+    setTextInputHandlers();
+    setImageEditors();
+    setEditElementButtons();
+    setCancelEditElementButtons();
+    setSaveEditElementButtons();
+    setAddNewElementHandlers();
+    setDeleteElementButtons();
+    setMoveElementButtons();
+    addEventListenersToTempVideos();
+    setShowMoreButtons();
+    setVideoHeight();
+}
+
+/**
+ * Method for moving a page element up one place
+ * @param {*} element_moving_up_id The element moving up
+ */
 function moveElementUp(element_moving_up_id) {
+    // If element moving up is the top element, disable its move up button
     if (current_page.top_element._id === element_moving_up_id) {
-        console.log("Can't move element up, disable element's 'Move Up' button");
+        enableAndDisableMoveElementButtons();
         return;
     }
+    // If the element moving up is not the top element and the top element has no child
     else if (current_page.top_element.child === null) {
-        console.log("Can't find element");
+        console.log("Cannot move unknown element");
         return;
     }
+    // If the element moving up is the top element's child, move it up one place
     else if (current_page.top_element.child._id === element_moving_up_id) {
         let element_moving_down = JSON.parse(JSON.stringify(current_page.top_element));
         let element_moving_up = JSON.parse(JSON.stringify(current_page.top_element.child));
@@ -34,97 +317,150 @@ function moveElementUp(element_moving_up_id) {
         element_moving_up.child = element_moving_down;
         current_page.top_element = element_moving_up;
 
-        let wrapper_id = getWrapperIdFromDatabaseId(element_moving_up_id);
-        let editor_id = getEditorIdFromDatabaseId(element_moving_up_id);
-        let add_new_element_id = getAddNewElementIdFromDatabaseId(element_moving_up_id);
-
-        let element_html = $("#" + wrapper_id)[0].outerHTML +
-            $("#" + editor_id)[0].outerHTML +
-            $("#" + add_new_element_id)[0].outerHTML;
-
-        $("#" + wrapper_id).remove();
-        $("#" + editor_id).remove();
-        $("#" + add_new_element_id).remove();
-
-        $("#" + add_new_element_id).after(element_html);
-        $("#" + add_new_element_id)[0].scrollIntoView({
-            behavior: "smooth",
-            block: "nearest"
-        });
-
-        setTextInputHandlers();
-        setEditElementButtons();
-        setCancelEditElementButtons();
-        setSaveEditElementButtons();
-        setAddNewElementHandlers();
-        setDeleteElementButtons();
-        setMoveElementButtons();
-
-        console.log(JSON.parse(JSON.stringify(current_page)));
+        setNewParentElement(element_moving_up._id, current_page._id);
         return;
     }
 
+    // If the element moving up is not the top element or its child, move it up one place
     let previous_element = current_page.top_element;
     let current_element = previous_element.child;
+    let found = false;
     
-    while (current_element !== null) {
+    while (current_element !== null && !found) {
         if (current_element.child !== null && current_element.child._id === element_moving_up_id) {
+            found = true;
             let element_moving_up = current_element.child;
             let element_moving_down = current_element;
             element_moving_down.child = element_moving_up.child;
             element_moving_up.child = element_moving_down;
             previous_element.child = element_moving_up;
+
+            setNewParentElement(element_moving_up._id, previous_element._id);
         }
 
         previous_element = current_element;
         current_element = current_element.child;
     }
 
-    console.log(JSON.parse(JSON.stringify(current_page)));
+    // If the element moving up was not found, send error message to the console
+    if (!found) {
+        console.log("Element not found");
+    }
 }
 
+/**
+ * Method for moving a page element down one place
+ * @param {*} element_moving_down_id The element to be moved down
+ */
 function moveElementDown(element_moving_down_id) {
-    if (current_page.top_element.child === null) {
-        console.log("Can't move down");
+    // If the element moving down is the top element and it has no child, disable the top element's move down button
+    if (current_page.top_element._id === element_moving_down_id && current_page.top_element.child === null) {
+        $("#move_element_down_button_" + getWrapperIdFromDatabaseId(current_page.top_element._id).prop("disabled", true));
+        console.log("The top element has no child element so cannot be moved down");
         return;
     }
+    // If the element moving down is the top element and it has a child, move it down one place
     else if (current_page.top_element._id === element_moving_down_id) {
         let element_moving_down = JSON.parse(JSON.stringify(current_page.top_element));
         let element_moving_up = JSON.parse(JSON.stringify(current_page.top_element.child));
         element_moving_down.child = element_moving_up.child;
         current_page.top_element = element_moving_up;
         current_page.top_element.child = element_moving_down;
-        console.log(JSON.parse(JSON.stringify(current_page)));
+
+        setNewParentElement(current_page.top_element.child._id, current_page.top_element._id);
         return;
     }
 
     let previous_element = current_page.top_element;
     let current_element = current_page.top_element.child;
+    let found = false;
 
-    while (current_element.child !== null) {
-        console.log(current_element._id);
+    while (current_element !== null && !found) {
         if (current_element._id === element_moving_down_id) {
-            console.log("found");
             found = true;
-            let element_moving_down = JSON.parse(JSON.stringify(current_element));
-            let element_moving_up = JSON.parse(JSON.stringify(current_element.child));
-            element_moving_down.child = element_moving_up.child;
-            element_moving_up.child = element_moving_down;
-            previous_element.child = element_moving_up;
+            // If the element moving down is not the bottom element, move it down one place
+            if (current_element.child !== null) {
+                let element_moving_down = JSON.parse(JSON.stringify(current_element));
+                let element_moving_up = JSON.parse(JSON.stringify(current_element.child));
+                element_moving_down.child = element_moving_up.child;
+                element_moving_up.child = element_moving_down;
+                previous_element.child = element_moving_up;
+
+                setNewParentElement(element_moving_down._id, element_moving_up._id);
+            }
+            // If the element moving down is the bottom element, disable its move down button
+            else {
+                $("#move_element_down_button_" + current_element._id).prop("disabled", true);
+                console.log("Cannot move bottom element down");
+            }
         }
 
         previous_element = current_element;
         current_element = current_element.child;
     }
 
-    if (current_element._id === element_moving_down_id) {
-        console.log("Can't move down, disable element's Move Down button");
+    // If the element moving down hasn't been found, send error message to console
+    if (!found) {
+        console.log("Element not found");
     }
-
-    console.log(JSON.parse(JSON.stringify(current_page)));
 }
 
-function addNewImageElementAndEditor(anchor_element_db_id) {
+function setNewParentElement(child_element_id, parent_element_id) {
+    let child_element_wrapper_id = getWrapperIdFromDatabaseId(child_element_id);
+    let child_element_editor_id = getEditorIdFromDatabaseId(child_element_id);
+    let child_element_add_new_element_id = getAddNewElementIdFromDatabaseId(child_element_id);
+    let parent_element_add_new_element_id = getAddNewElementIdFromDatabaseId(parent_element_id);
+
+    let child_element_html = $("#" + child_element_wrapper_id)[0].outerHTML +
+        $("#" + child_element_editor_id)[0].outerHTML +
+        $("#" + child_element_add_new_element_id)[0].outerHTML;
+
+    $("#" + child_element_wrapper_id).remove();
+    $("#" + child_element_editor_id).remove();
+    $("#" + child_element_add_new_element_id).remove();
+
+    $("#" + parent_element_add_new_element_id).after(child_element_html);
+    $("#" + child_element_wrapper_id)[0].scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+    });
+
+    setElementEventHandlers();
+    enableAndDisableMoveElementButtons();
+}
+
+function enableAndDisableMoveElementButtons() {
+    // Set top element's move up button as disabled
+    $("#move_element_up_button_" + getWrapperIdFromDatabaseId(current_page.top_element._id)).prop("disabled", true);
+
+    // If the top element doesn't have a child, disable the top element's move down button
+    if (current_page.top_element.child === null) {
+        $("#move_element_down_button_" + getWrapperIdFromDatabaseId(current_page.top_element._id)).prop("disabled", true);
+    }
+    // If the top element does have a child, enable the top element's move down button
+    else {
+        $("#move_element_down_button_" + getWrapperIdFromDatabaseId(current_page.top_element._id)).prop("disabled", false);
+    }
+
+    // Set the move up and down button for each element after the top element
+    let current_element = current_page.top_element.child;
+    while (current_element !== null) {
+        // Enable the move up button
+        $("#move_element_up_button_" + getWrapperIdFromDatabaseId(current_element._id)).prop("disabled", false);
+        // If the element does not have a child, disable the element's down button
+        if (current_element.child === null) {
+            $("#move_element_down_button_" + getWrapperIdFromDatabaseId(current_element._id)).prop("disabled", true);
+        }
+        // If the element does have a child, enable the element's down button
+        else {
+            $("#move_element_down_button_" + getWrapperIdFromDatabaseId(current_element._id)).prop("disabled", false);
+        }
+
+        current_element = current_element.child;
+    }
+}
+
+function addNewImageElementAndEditor(parent_element_db_id) {
     $.get("/get_random_id", function(random_id) {
         let new_image = {
             _id: "image_" + random_id,
@@ -132,10 +468,10 @@ function addNewImageElementAndEditor(anchor_element_db_id) {
             caption: ""
         }
 
-        addNewElementToLocalDB(anchor_element_db_id, new_image);
+        addNewElementToLocalDB(parent_element_db_id, new_image);
         let new_image_html = getImageElement(new_image) + getImageEditor(new_image) + getAddNewElementDiv("image_" + random_id);
-        $("#add_new_element_wrapper_" + anchor_element_db_id).after(new_image_html);
-        $("#add_new_element_dropdown_" + anchor_element_db_id).val("choose_element_type");
+        $("#add_new_element_wrapper_" + parent_element_db_id).after(new_image_html);
+        $("#add_new_element_dropdown_" + parent_element_db_id).val("choose_element_type");
         $("#image_wrapper_" + random_id).css("display", "none");
         $("#image_editor_wrapper_" + random_id).css("display", "inline-block");
         $("#save_edit_element_button_image_wrapper_" + random_id).prop("disabled", true);
@@ -148,20 +484,40 @@ function addNewImageElementAndEditor(anchor_element_db_id) {
             open_editors.push("image_wrapper_" + random_id);
         }
 
-        setEditElementButtons();
-        setImageEditors();
-        setCancelEditElementButtons();
-        setSaveEditElementButtons();
-        setAddNewElementHandlers();
-        setDeleteElementButtons();
-        setMoveElementButtons();
+        setElementEventHandlers();
+        enableAndDisableMoveElementButtons();
     })
 }
 
-function addNewTopElementToLocalDB(element) {
-    element.child = current_page.top_element;
-    current_page.top_element = element;
-    console.log(current_page);
+function addNewVideoElementAndEditor(parent_element_db_id) {
+    $.get("/get_random_id", function(random_id) {
+        let new_video = {
+            _id: "video_link_" + random_id,
+            video_src: "",
+            title: "",
+            description: ""
+        }
+
+        addNewElementToLocalDB(parent_element_db_id, new_video);
+        let new_video_html = getVideoLink(new_video) + getVideoLinkEditor(new_video) + getAddNewElementDiv("video_link_" + random_id);
+        $("#add_new_element_wrapper_" + parent_element_db_id).after(new_video_html);
+        $("#add_new_element_dropdown_" + parent_element_db_id).val("choose_element_type");
+        $("#video_link_editor_wrapper_" + random_id).css("display", "inline-block")
+        $("#video_link_wrapper_" + random_id).css("display", "none");
+        //$("#save_edit_element_button_video_link_wrapper_" + random_id).prop("disabled", true);
+        $("#video_link_editor_wrapper_" + random_id)[0].scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+        });
+        
+        if (!open_editors.includes("video_link_editor_wrapper_" + random_id)) {
+            open_editors.push("video_link_wrapper_" + random_id);
+        }
+
+        setVideoHeight();
+        setElementEventHandlers();
+        enableAndDisableMoveElementButtons();
+    })
 }
 
 function getParentElement(element_id) {
@@ -199,13 +555,9 @@ function addNewElementToLocalDB(parent_id, new_element) {
 
         current_element = current_element.child;
     }
-
-    //console.log("After new element inserted:");
-    //console.log(JSON.parse(JSON.stringify(current_page)));
 }
 
 function removeElementFromDB(element_id) {
-    console.log("removeElement()");
     if (element_id === current_page.top_element._id) {
         current_page.top_element = current_page.top_element.child;
     }
@@ -284,7 +636,6 @@ function imageSrcSuccess(image_id) {
 
 function setImageEditors() {
     $(".image_link_button").click(function() {
-        console.log("image_link_button CLICK");
         let id = $(this).attr("id").split("image_link_button_")[1];
         let link_input = $("#image_link_input_" + id);
         let link = link_input.val();
@@ -296,39 +647,61 @@ function setImageEditors() {
             $("#image_upload_error_message_" + id).css("display", "block");
         }
     })
+}
 
-    /*$(".image_upload_button").click(function() {
-        let id_no = $(this).attr("id").split("image_upload_button_")[1];
-        let src = $("#uploaded_image_" + id_no).attr("src");
+function saveVideoLinkEdit(wrapper_id) {
+    let id_no = wrapper_id.split("video_link_wrapper_")[1];
+    let error = false;
+    let new_title = $("#video_link_editor_title_textarea_" + id_no).val().trim();
+    let new_description = $("#video_link_editor_description_textarea_" + id_no).val().trim();
+    let new_video_src = $("#video_link_editor_video_dropdown_" + id_no).val();
 
-        // If the image link is valid
-        if (src !== "/images/image_not_found.jpg" && src !== "/images/default_image.jpg") {
-            // Get input caption
-            let caption = $("#image_caption_input_" + id_no).val().trim();
+    if (new_title === "") {
+        error = true;
+        $("#video_link_title_error_message_" + id_no).html("Video title cannot be blank");
+        $("#video_link_title_error_message_" + id_no).css("display", "block");
+    }
 
-            let current_element = current_page.top_element;
-            let found = false;
+    if (new_description === "") {
+        error = true;
+        $("#video_link_description_error_message_" + id_no).html("Video description cannot be blank");
+        $("#video_link_description_error_message_" + id_no).css("display", "block");
+    }
 
-            while (current_element !== null && !found) {
-                if (current_element._id === "image_" + id_no) {
-                    found = true;
-                    // Set DB image src
-                    current_element.image_src = src;
+    if (!error) {
+        let current_element = current_page.top_element;
+        let found = false;
 
-                    // If caption has changed, set DB caption
-                    if (caption !== current_element.caption) {
-                        current_element.caption = caption;
-                    }
-                }
-
-                // Go to next element
-                current_element = current_element.child;
+        while (current_element !== null && !found) {
+            if (current_element._id === "video_link_" + id_no) {
+                found = true;
+                // Set DB values
+                current_element.video_src = new_video_src;
+                current_element.title = new_title;
+                current_element.description = new_description;
             }
 
-            // Post new image
-            postNewImage(id_no, src, caption);
+            // Go to next element
+            current_element = current_element.child;
         }
-    }) */
+
+        new_description_array = getReducedDescription(new_description);
+
+        if (new_description_array[0]) {
+            new_description = new_description_array[1];
+            $("#show_more_button_" + id_no).html("+ Read more");
+        }
+        else {
+            $("#show_more_button_" + id_no).html("");
+        }
+
+        $("#video_link_title_" + id_no).html(new_title);
+        $("#video_link_description_" + id_no).html("<b>Description: </b>" + new_description);
+        $("#" + wrapper_id).css("display", "inline-block");
+        $("#video_link_editor_wrapper_" + id_no).css("display", "none");
+        removeFromOpenEditors(wrapper_id);
+        setElementEventHandlers();
+    }
 }
 
 function saveImageEdit(wrapper_id) {
@@ -388,7 +761,18 @@ function isValidURL(url) {
     }
 }
 
-function setTemplateCheckboxes() {
+function setTeacherControls() {
+    $("#student_view_checkbox").change(function() {
+        if ($(this).is(":checked")) {
+            student_view = true;
+        }
+        else {
+            student_view = false;
+        }
+
+        displayPageContent(current_page, false);
+    })
+
     $("#show_template_checkbox").change(function() {
         console.log($(this).is(":checked"));
     })
@@ -504,19 +888,35 @@ function convertTextToLoremIpsum(text) {
  */
 function setTextInputHandlers() {
     $(".title_editor_textarea").on("input", function() {
-        let id = $(this).attr("id").split("title_editor_textarea_")[1];
+        let id_no = $(this).attr("id").split("title_editor_textarea_")[1];
         let character_count = calculateCharacterCount($(this).val());
         let word_count = calculateWordCount($(this).val());
-        $("#title_character_count_" + id).html(character_count);
-        $("#title_word_count_" + id).html(word_count);
+        $("#title_character_count_" + id_no).html(character_count);
+        $("#title_word_count_" + id_no).html(word_count);
     })
 
     $(".text_block_editor_textarea").on("input", function() {
-        let id = $(this).attr("id").split("text_block_editor_textarea_")[1];
+        let id_no = $(this).attr("id").split("text_block_editor_textarea_")[1];
         let character_count = calculateCharacterCount($(this).val());
         let word_count = calculateWordCount($(this).val());
-        $("#text_block_character_count_" + id).html(character_count);
-        $("#text_block_word_count_" + id).html(word_count);
+        $("#text_block_character_count_" + id_no).html(character_count);
+        $("#text_block_word_count_" + id_no).html(word_count);
+    })
+
+    $(".video_link_editor_title_textarea").on("input", function() {
+        let id_no = $(this).attr("id").split("video_link_editor_title_textarea_")[1];
+        let character_count = calculateCharacterCount($(this).val());
+        let word_count = calculateWordCount($(this).val());
+        $("#video_title_character_count_" + id_no).html(character_count);
+        $("#video_title_word_count_" + id_no).html(word_count);
+    })
+
+    $(".video_link_editor_description_textarea").on("input", function() {
+        let id_no = $(this).attr("id").split("video_link_editor_description_textarea_")[1];
+        let character_count = calculateCharacterCount($(this).val());
+        let word_count = calculateWordCount($(this).val());
+        $("#video_description_character_count_" + id_no).html(character_count);
+        $("#video_description_word_count_" + id_no).html(word_count);
     })
 }
 
@@ -555,7 +955,11 @@ function displayPageContent(page, template) {
     }
     else {  // If the page is a coure page
         // Create HTML for the course page title and its editor
-        title_html = getTitleElement() + getTitleEditor() + getAddNewElementDiv(current_page._id);
+        title_html = getTitleElement();
+
+        if (!student_view) {
+            title_html += getTitleEditor() + getAddNewElementDiv(current_page._id);
+        }
 
         // Content will be added to the course page
         content_div = "#page_content";
@@ -568,6 +972,7 @@ function displayPageContent(page, template) {
     if (page.top_element === null) {
         let error_msg = "<p>This page does not currently have any content</p>";
         $(content_div).append(error_msg);
+        // Set the title element and add new element handler setters
         setTextInputHandlers();
         setEditElementButtons();
         setCancelEditElementButtons();
@@ -590,8 +995,11 @@ function displayPageContent(page, template) {
             }
             else {  // If the page is a course page
                 // Set HTML for the text block and its editor
-                element_html = getTextBlock(current_element) + getTextBlockEditor(current_element) + 
-                    getAddNewElementDiv(current_element._id);
+                element_html = getTextBlock(current_element);
+
+                if (!student_view) {
+                    element_html += getTextBlockEditor(current_element) + getAddNewElementDiv(current_element._id);
+                }
             }
         }
         // If element is an image
@@ -603,34 +1011,46 @@ function displayPageContent(page, template) {
             // If the page is a course page
             else {
                 // Set HTML for the photo element and its editor
-                element_html += getImageElement(current_element) + getImageEditor(current_element) +
-                    getAddNewElementDiv(current_element._id);
+                element_html = getImageElement(current_element);
+
+                if (!student_view) {
+                    element_html += getImageEditor(current_element) + getAddNewElementDiv(current_element._id);
+                }
+            }
+        }
+        else if (current_element._id.includes("video_link")) {
+            if (template) {
+                
+            }
+            else {
+                element_html = getVideoLink(current_element);
+
+                if (!student_view) {
+                    element_html += getVideoLinkEditor(current_element) + getAddNewElementDiv(current_element._id);
+                }
             }
         }
 
         // Add the element to the page
         $(content_div).append(element_html);
 
+        if (!template) {
+            if (current_element._id === current_page.top_element._id) {
+                $("#move_element_up_button_" + getWrapperIdFromDatabaseId(current_element._id)).prop("disabled", true);
+            }
+    
+            if (current_element.child === null) {
+                $("#move_element_down_button_" + getWrapperIdFromDatabaseId(current_element._id)).prop("disabled", true);
+            }
+        }
+
         // Go to next page element
         current_element = current_element.child;
     }
 
-    // If page is not a template page, set the text input handlers
+    // If page is not a template page, set the element setters
     if (!template) {
-        setImageEditors();
-        setTextInputHandlers();
-        setEditElementButtons();
-        setCancelEditElementButtons();
-        setSaveEditElementButtons();
-        setDeleteElementButtons();
-        setAddNewElementHandlers();
-        setMoveElementButtons();
-    }
-    
-    // If page is not a template page and user is in edit mode
-    if (!template && edit_mode) {
-        // Display editors
-        displayEditors();
+        setElementEventHandlers();
     }
 }
 
@@ -643,6 +1063,7 @@ function getAddNewElementDiv(id) {
                 "<option value='choose_element_type'>Choose Element Type</option>" +
                 "<option value='text_block'>Text Block</option>" +
                 "<option value='image'>Image</option>" +
+                "<option value='video'>Video</option>" +
             "</select>" +
             "<input type='button' id='add_new_element_button_" + id + "' class='add_new_element_button' value='Add New Element'>" +
         "</div>" +
@@ -671,6 +1092,9 @@ function setAddNewElementHandlers() {
             else if (new_element_type === "image") {
                 addNewImageElementAndEditor(anchor_element_db_id);
             }
+            else if (new_element_type === "video") {
+                addNewVideoElementAndEditor(anchor_element_db_id);
+            }
         }
     })
 }
@@ -683,7 +1107,6 @@ function addNewTextBlockAndEditor(anchor_element_db_id) {
             child: null
         }
 
-        console.log("addNewTextBlockAndEditor()");
         addNewElementToLocalDB(anchor_element_db_id, new_text_block);
         let new_text_block_html = getTextBlock(new_text_block) + getTextBlockEditor(new_text_block) +
             getAddNewElementDiv("text_block_" + random_id);
@@ -700,33 +1123,9 @@ function addNewTextBlockAndEditor(anchor_element_db_id) {
             open_editors.push("text_block_wrapper_" + random_id);
         }
 
-        //$("#add_new_element_button_" + anchor_element_db_id).unbind("click");
-        setTextInputHandlers();
-        setEditElementButtons();
-        setCancelEditElementButtons();
-        setSaveEditElementButtons();
-        setAddNewElementHandlers();
-        setDeleteElementButtons();
-        setMoveElementButtons();
+        setElementEventHandlers();
+        enableAndDisableMoveElementButtons();
     })
-    /*
-        addNewElementToLocalDB(anchor_element_db_id, new_image);
-        let new_image_html = getImageElement(new_image) + getImageEditor(new_image) + getAddNewElementDiv(random_id);
-        $("#add_new_element_wrapper_" + anchor_element_db_id).after(new_image_html);
-        $("#image_wrapper_" + random_id).css("display", "none");
-        $("#image_editor_wrapper_" + random_id).css("display", "inline-block");
-        $("#save_edit_element_button_image_wrapper_" + random_id).prop("disabled", true);
-        $("#image_editor_wrapper_" + random_id)[0].scrollIntoView({
-            behavior: "smooth",
-            block: "nearest"
-        });
-
-        setEditElementButtons();
-        setImageEditors();
-        setCancelEditElementButtons();
-        setSaveEditElementButtons();
-        setAddNewElementHandlers();
-    */
 }
 
 function setEditElementButtons() {
@@ -742,6 +1141,9 @@ function setEditElementButtons() {
         else if (wrapper_id.includes("image")) {
             setImageEditorValues(wrapper_id);
         }
+        else if (wrapper_id.includes("video_link")) {
+            setVideoLinkEditorValues(wrapper_id);
+        }
 
         $("#" + wrapper_id).css("display", "none");
         $("#" + getEditorIdFromWrapperId(wrapper_id)).css("display", "inline-block");
@@ -753,7 +1155,46 @@ function setEditElementButtons() {
         if (!open_editors.includes(wrapper_id)) {
             open_editors.push(wrapper_id);
         }
+
+        // If a video link is being edited, set its poster height now that it's visible
+        if (wrapper_id.includes("video_link")) {
+            setVideoHeight();
+        }
     })
+}
+
+function setVideoLinkEditorValues(wrapper_id) {
+    let id_no = wrapper_id.split("video_link_wrapper_")[1];
+    let title = $("#video_link_title_" + id_no).html();
+    let description = "";
+    let poster_src = "";
+    let video_src = "Select a Video File";
+    
+    let found = false;
+    let current_element = current_page.top_element;
+
+    while (current_element !== null && !found) {
+        if (current_element._id === "video_link_" + id_no) {
+            description = current_element.description;
+            poster_src = current_element.poster;
+            video_src = current_element.video_src;
+        }
+
+        current_element = current_element.child;
+    }
+
+    $("#video_link_editor_title_textarea_" + id_no).val(title);
+    $("#video_link_editor_description_textarea_" + id_no).val(description);
+    $("#video_link_editor_poster_" + id_no).attr("src", poster_src);
+    $("#video_link_editor_video_dropdown_" + id_no).val(video_src);
+    let title_character_count = calculateCharacterCount(title);
+    let title_word_count = calculateWordCount(title);
+    let description_character_count = calculateCharacterCount(description);
+    let description_word_count = calculateWordCount(description);
+    $("#video_title_character_count_" + id_no).html(title_character_count);
+    $("#video_title_word_count_" + id_no).html(title_word_count);
+    $("#video_description_character_count_" + id_no).html(description_character_count);
+    $("#video_description_word_count_" + id_no).html(description_word_count);
 }
 
 function setTextBlockEditorValues(wrapper_id) {
@@ -833,10 +1274,6 @@ function removeFromOpenEditors(wrapper_id) {
 function saveTextBlockEdit(wrapper_id) {
     let id_no = wrapper_id.split("text_block_wrapper_")[1];
     let new_text = $("#text_block_editor_textarea_" + id_no).val().trim().replaceAll("\n", "<br>");
-    console.log("wrapper_id: " + wrapper_id);
-    console.log("id_no: "+ id_no);
-    console.log("Before removal:");
-    console.log(JSON.parse(JSON.stringify(open_editors)));
 
     if (new_text === "") {
         $("#text_block_error_message_" + id_no).html("Text block cannot be blank");
@@ -855,8 +1292,6 @@ function saveTextBlockEdit(wrapper_id) {
                 $("#text_block_editor_wrapper_" + id_no).css("display", "none");
                 $("#text_block_error_message_" + id_no).css("display", "none");
                 removeFromOpenEditors(wrapper_id);
-                console.log("after removal:");
-                console.log(JSON.parse(JSON.stringify(open_editors)));
             }
 
             current_element = current_element.child;
@@ -866,31 +1301,30 @@ function saveTextBlockEdit(wrapper_id) {
 
 function setDeleteElementButtons() {
     $(".delete_element_button").click(function() {
-        console.log("delete_element_button.CLICK");
         let wrapper_id = $(this).attr("id").split("delete_element_button_")[1];
-        console.log("wrapper_id: " + wrapper_id);
         let id_no = "";
-
-        let add_new_element_wrapper_id = "";
-        let element_db_id = "";
 
         if (wrapper_id.includes("image")) {
             id_no = wrapper_id.split("image_wrapper_")[1];
-            element_db_id = "image_" + id_no;
-            add_new_element_wrapper_id = "add_new_element_wrapper_image_" + id_no;
         }
         else if (wrapper_id.includes("text_block")) {
-            console.log("includes text_block");
             id_no = wrapper_id.split("text_block_wrapper_")[1];
-            element_db_id = "text_block_" + id_no;
-            add_new_element_wrapper_id = "add_new_element_wrapper_text_block_" + id_no;
-            console.log("add_newElement_wrapper_id: " + add_new_element_wrapper_id);
         }
+        else if (wrapper_id.includes("video_link")) {
+            id_no = wrapper_id.split("video_link_wrapper_")[1];
+        }
+
+        let element_db_id = getDatabaseIdFromWrapper(wrapper_id);
+        let add_new_element_wrapper_id = getAddNewElementIdFromDatabaseId(element_db_id);
 
         removeElementFromDB(element_db_id);
         $("#" + wrapper_id).remove();
         $("#" + getEditorIdFromWrapperId(wrapper_id)).remove();
         $("#" + add_new_element_wrapper_id).remove();
+
+        if (current_page.top_element !== null) {
+            enableAndDisableMoveElementButtons();
+        }
     })
 }
 
@@ -920,17 +1354,27 @@ function setCancelEditElementButtons() {
             add_new_element_wrapper_id = "add_new_element_wrapper_text_block_" + id_no;
             $("#text_block_error_message_" + id_no).css("display", "none");
         }
+        else if (wrapper_id.includes("video_link")) {
+            id_no = wrapper_id.split("video_link_wrapper_")[1];
+            element_db_id = "video_link_" + id_no;
+            add_new_element_wrapper_id = getAddNewElementIdFromDatabaseId(element_db_id);
+            $("#video_link_title_error_message_" + id_no).css("display", "none");
+        }
 
         while (current_element !== null && ! found) {
             if (("image_" + id_no === current_element._id && current_element.image_src === "/images/default_image.jpg") ||
-                ("text_block_" + id_no === current_element._id && current_element.text === "")) {
-                    console.log("found");
+                ("text_block_" + id_no === current_element._id && current_element.text === "") ||
+                ("video_link_" + id_no === current_element._id && current_element.video_src === "")) {
                 found = true;
                 removed = true;
                 $("#" + wrapper_id).remove();
                 $("#" + getEditorIdFromWrapperId(wrapper_id)).remove();
                 $("#" + add_new_element_wrapper_id).remove();
                 removeElementFromDB(element_db_id);
+                
+                if (current_page.top_element !== null) {
+                    enableAndDisableMoveElementButtons();
+                }
             }
             
             current_element = current_element.child;
@@ -938,12 +1382,14 @@ function setCancelEditElementButtons() {
 
         if (!removed) {
             $("#" + wrapper_id).css("display", "inline-block");
+
+            if (wrapper_id.includes("video_link")) {
+                setVideoHeight();
+            }
         }
         
         $("#" + getEditorIdFromWrapperId(wrapper_id)).css("display", "none");
         removeFromOpenEditors(wrapper_id);
-
-        console.log(open_editors);
     })
 }
 
@@ -960,44 +1406,25 @@ function setSaveEditElementButtons() {
         else if (wrapper_id.includes("image")) {
             saveImageEdit(wrapper_id);
         }
+        else if (wrapper_id.includes("video_link")) {
+            saveVideoLinkEdit(wrapper_id);
+        }
     })
 }
 
 function setMoveElementButtons() {
+    $(".move_element_up_button").unbind("click");
+    $(".move_element_down_button").unbind("click");
+
     $(".move_element_up_button").click(function() {
-        console.log("move_element_up_button_CLICK");
         let wrapper_id = $(this).attr("id").split("move_element_up_button_")[1];
-        let element_db_id = "";
-        console.log("wrapper_id: " + wrapper_id);
-
-        if (wrapper_id.includes("text_block")) {
-            console.log("is text block");
-            let id_no = wrapper_id.split("text_block_wrapper_")[1];
-            element_db_id = "text_block_" + id_no;
-        }
-        else if (wrapper_id.includes("image")) {
-            console.log("is image");
-            let id_no = wrapper_id.split("image_wrapper_")[1];
-            element_db_id = "image_" + id_no;
-        }
-
+        let element_db_id = getDatabaseIdFromWrapper(wrapper_id);
         moveElementUp(element_db_id);
     })
 
     $(".move_element_down_button").click(function() {
-        console.log("move_element_down_button_CLICK");
         let wrapper_id = $(this).attr("id").split("move_element_down_button_")[1];
-        let element_db_id = "";
-
-        if (wrapper_id.includes("text_block")) {
-            let id_no = wrapper_id.split("text_block_wrapper_")[1];
-            element_db_id = "text_block_" + id_no;
-        }
-        else if (wrapper_id.includes("image")) {
-            let id_no = wrapper_id.split("image_wrapper_")[1];
-            element_db_id = "image_" + id_no;
-        }
-
+        let element_db_id = getDatabaseIdFromWrapper(wrapper_id);
         moveElementDown(element_db_id);
     })
 }
@@ -1032,6 +1459,10 @@ function getEditorIdFromWrapperId(wrapper_id) {
         let editor_id_no = wrapper_id.split("image_wrapper_")[1];
         return "image_editor_wrapper_" + editor_id_no;
     }
+    else if (wrapper_id.includes("video_link")) {
+        let editor_id_no = wrapper_id.split("video_link_wrapper_")[1];
+        return "video_link_editor_wrapper_" + editor_id_no;
+    }
 }
 
 function getEditorIdFromDatabaseId(db_id) {
@@ -1047,6 +1478,10 @@ function getEditorIdFromDatabaseId(db_id) {
         let id_no = db_id.split("image_")[1];
         return "image_editor_wrapper_" + id_no;
     }
+    else if (db_id.includes("video_link")) {
+        let id_no = db_id.split("video_link_")[1];
+        return "video_link_editor_wrapper_" + id_no;
+    }
 }
 
 function getWrapperIdFromDatabaseId(db_id) {
@@ -1061,6 +1496,10 @@ function getWrapperIdFromDatabaseId(db_id) {
     else if (db_id.includes("image")) {
         let id_no = db_id.split("image_")[1];
         return "image_wrapper_" + id_no;
+    }
+    else if (db_id.includes("video_link")) {
+        let id_no = db_id.split("video_link_")[1];
+        return "video_link_wrapper_" + id_no;
     }
 }
 
@@ -1095,6 +1534,19 @@ function getDatabaseIdFromWrapper(wrapper_id) {
         let id_no = wrapper_id.split(splitter)[1];
         return "image_" + id_no;
     }
+    else if (wrapper_id.includes("video_link")) {
+        let splitter = "";
+
+        if (wrapper_id.includes("editor")) {
+            splitter = "video_link_editor_wrapper_";
+        }
+        else {
+            splitter = "video_link_wrapper_";
+        }
+
+        let id_no = wrapper_id.split(splitter)[1];
+        return "video_link_" + id_no;
+    }
 
     return null;
 }
@@ -1103,9 +1555,9 @@ function getTitleElement() {
     let id_no = current_page._id.split("course_page_")[1];
     let title_html = "";
 
-    if (user_view) {
+    if (student_view) {
         title_html =
-        "<div id='page_title_wrapper_" + id_no + "' class='page_title_wrapper page_element'>" +
+        "<div id='page_title_wrapper_" + id_no + "' class='page_title page_element'>" +
             "<h1 id='page_title_" + id_no + "'>" + current_page.title + "</h1>" +
         "</div>";
     }
@@ -1128,7 +1580,8 @@ function getTitleEditor() {
     let title_html =
     "<fieldset id='page_title_editor_wrapper_" + id_no + "' class='page_element_editor page_title_editor_wrapper'>" +
         "<legend class='legend'>Title Editor</legend>" +
-        "<textarea id='title_editor_textarea_" + id_no + "' class='title_editor_textarea' rows='3'></textarea>" +
+        "<p class='editor_header'>Title</p>" +
+        "<textarea id='title_editor_textarea_" + id_no + "' class='title_editor_textarea' rows='3' placeholder='Enter title here...'></textarea>" +
         "<p id='page_title_error_message_" + id_no + "' class='page_title_error_message'></p>" +
         "<p class='word_character_counts'><span id='title_word_count_" + id_no + "'>0</span> words " +
             "| <span id='title_character_count_" + id_no + "'>0</span> characters" +
@@ -1145,7 +1598,7 @@ function getTextBlock(text_block) {
     let id_no = text_block._id.split("text_block_")[1];
     let text_block_html = "";
 
-    if (user_view) {
+    if (student_view) {
         text_block_html =
         "<div id='text_block_wrapper_" + id_no + "' class='page_element text_block'>" +
             "<p id='" + text_block._id + "' class='text_block'>" + text_block.text + "</p>" +
@@ -1178,7 +1631,8 @@ function getTextBlockEditor(element) {
     let editor_html =
     "<fieldset id='text_block_editor_wrapper_" + id_no + "' class='page_element_editor text_block_editor_wrapper'>" +
         "<legend class='legend'>Text Block Editor</legend>" +
-        "<textarea id='text_block_editor_textarea_" + id_no + "' class='text_block_editor_textarea' rows='10'></textarea>" + 
+        "<p class='editor_header'>Text</p>" +
+        "<textarea id='text_block_editor_textarea_" + id_no + "' class='text_block_editor_textarea' rows='10' placeholder='Enter text here...'></textarea>" + 
         "<p id='text_block_error_message_" + id_no + "' class='text_block_error_message'></p>" +
         "<p class='word_character_counts'><span id='text_block_word_count_" + id_no + "'>0</span> words " +
             "| <span id='text_block_character_count_" + id_no + "'>0</span> characters" +
@@ -1220,9 +1674,9 @@ function getImageElement(element) {
 
     let image_html = "";
 
-    if (user_view) {
+    if (student_view) {
         image_html =
-        "<div id='image_wrapper_" + id_no + "' class='image_wrapper page_element'>" +
+        "<div id='image_wrapper_" + id_no + "' class='image page_element'>" +
             "<img id='image_" + id_no + "' src='" + element.image_src +
                 "' class='image_element' onerror='imageSrcError(this.id)'>" +
             caption_html +
@@ -1253,8 +1707,9 @@ function getImageEditor(element) {
     let editor_html =
     "<fieldset id='image_editor_wrapper_" + id_no + "' class='image_editor_wrapper page_element_editor'>" +
         "<legend class='legend'>Image Editor</legend>" +
+        "<p class='editor_header'>Image URL</p>" +
         "<div class='image_link_wrapper'>" +
-            "<input id='image_link_input_" + id_no + "' type='url' class='image_link_input' placeholder='Insert image link here...'>" +
+            "<input id='image_link_input_" + id_no + "' type='url' class='image_link_input' placeholder='Enter image URL here...'>" +
             "<input id='image_link_button_" + id_no + "' type='button' class='image_link_button' value='Add Image'>" +
         "</div>" +
 
@@ -1268,6 +1723,7 @@ function getImageEditor(element) {
         "</div>" +
 
         "<div class='image_caption_wrapper'>" +
+            "<p class='editor_header'>Image Caption</p>" +
             "<input id='image_caption_input_" + id_no + "' type='text' class='image_caption_input' placeholder='Insert image caption here... (optional)'>" +
         "</div>" +
         "<div class='divider'></div>" +
@@ -1356,7 +1812,19 @@ var course = {
                         "create their own dialogue because pre-production was focused on the story and action. Rubber and " +
                         "metal versions of the armor, created by Stan Winston's company, were mixed with computer-generated " +
                         "imagery to create the title character.",
-                        child: null
+                        child: {
+                            _id: "video_link_82484033334",
+                            video_src: "/videos/mary berry.mp4",
+                            poster: "/images/default_image.jpg",
+                            title: "Kurt Cobain",
+                            poster: "/images/kurt_cobain.jpg",
+                            description: "Kurt Donald Cobain (February 20, 1967 - c. April 5, 1994) was an American musician who was the " +
+                            "founder, lead vocalist, guitarist and primary songwriter of the rock band Nirvana. Through his angst-fueled " +
+                            "songwriting and anti-establishment persona, Cobain's compositions widened the thematic conventions of mainstream " +
+                            "rock. He was heralded as a spokesman of Generation X and is highly recognized as one of the most influential " +
+                            "alternative rock musicians.",
+                            child: null
+                        }
                     }
                 }
             }

@@ -5,27 +5,127 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/style/style.css">
-    <link rel="stylesheet" href="/style/navbar.css">
     <link rel="stylesheet" href="/style/login_register.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.4/dist/js.cookie.min.js"></script>
     <script src="/scripts/login.js" type="application/javascript"></script>
-    <title>Login</title>
+    <script src="/scripts/helper_icons.js" type="application/javascript"></script>
+    <title>Login | Studium</title>
 </head>
 <body>
-    <%- include ("./navbar.ejs", { user }) %>
+    <%- include ("./navbar.ejs", { current_user }) %>
+    <%- include ("./alert.ejs") %>
+    <%- include ("./bottom_banner.ejs") %>
+
+    <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+        <% var entered_username = ""; %>
+        <% var entered_password = ""; %>
+
+        <% if (typeof username !== 'undefined') { %>
+            <% entered_username = username; %>
+        <% } %>
+
+        <% if (typeof password !== 'undefined') { %>
+            <% entered_password = password; %>
+        <% } %>
+
+        <% var username_error_message = ""; %>
+        <% var username_error_message_display_type = ""; %>
+        <% var password_error_message = ""; %>
+        <% var password_error_message_display_type = ""; %>
+
+        <% errors.forEach(function(error) { %>
+            <% console.log(error); %>
+            <% if (error.error_type === "username_error") { %>
+                <% username_error_message = error.error_message; %>
+                <% username_error_message_display_type = "block"; %>
+            <% } else { %>
+                <% password_error_message = error.error_message; %>
+                <% password_error_message_display_type = "block"; %>
+            <% } %>
+        <% }) %>
+    <% } %>
 
     <div class="small_page_container">
         <div id="login_form_container">
-            <h1>Login</h1>
-            <form id="login_form">
-                <label for="login_username">Username:</label><br>
-                <input id="login_username" required type="text" name="username" class="login_input"
-                    value="<%= typeof username != 'undefined' ? username : '' %>"><br><br>
-                <label for="login_password">Password:</label><br>
-                <input id="login_password" required type="password" name="password" class="login_input"
-                    value="<%= typeof password != 'undefined' ? password : '' %>"><br>
-                    <span id="error_messages"></span>
-                <button id="login_submit_button" type="button">LOGIN</button>
+            <div id="login_form_header_and_helper_icon_wrapper">
+                <h1 id="login_form_header">Login</h1>
+
+                <div class='helper_icon_wrapper'>
+                    <img class='helper_icon' src='/images/helper_icon.png'>
+
+                    <div id='login_form_header_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_bottom'>
+                        <p class="helper_icon_text">
+                            On this page you can log into your Studium account. Once you've entered your account's username 
+                            and password below, click the "Login" button. If your details are accepted, you will be 
+                            logged into your account.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="login_form" method="post" action="/login" novalidate>
+                <div class="field_wrapper">
+                    <div class="field_label_and_helper_icon_wrapper">
+                        <label for="login_username_input" class="field_label">Username</label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='field_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    Enter your account's username in the text box below.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input id="login_username_input" name="username" required type="text" name="username" class="login_input" 
+                        value="<%=entered_username%>" placeholder="Enter your username here...">
+                    <p id="login_username_error_message" class="page_error_message <%=username_error_message_display_type%>">
+                        <%=username_error_message%>
+                    </p>
+                </div>
+
+                <div class="field_wrapper">
+                    <div class="field_label_and_helper_icon_wrapper">
+                        <label for="login_password_input" class="field_label">Password</label>
+
+                        <div class='helper_icon_wrapper'>
+                            <img class='helper_icon' src='/images/helper_icon.png'>
+        
+                            <div class='field_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">
+                                    Enter your account's password in the text box below. For security purposes you won't 
+                                    see the characters you type.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input id="login_password_input" name="password" required type="password" name="password" 
+                        class="login_input" value="<%=entered_password%>" placeholder="Enter your password here...">
+                    <p id="login_password_error_message" class="page_error_message <%=password_error_message_display_type%>">
+                        <%=password_error_message%>
+                    </p>
+                </div>
+
+                <div class="submit_button_and_helper_icon_wrapper">
+                    <button id="login_submit_button" type="submit" class="white_button">Login</button>
+
+                    <div class='helper_icon_wrapper'>
+                        <img class='helper_icon' src='/images/helper_icon.png'>
+
+                        <div id='login_submit_button_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                            <p class="helper_icon_text">
+                                When you click the "Login" button you will be logged into your new account, 
+                                provided there are no issues with the details you have entered. If, however, there are 
+                                issues, an error message will help you to resolve them.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
     </div>

@@ -5,37 +5,85 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.4/dist/js.cookie.min.js"></script>
     <script src="/scripts/course_list.js" type="application/javascript"></script>
+    <script src="/scripts/convert_date.js" type="application/javascript"></script>
+    <script src="/scripts/alert.js" type="application/javascript"></script>
+    <script src="/scripts/course_subjects.js" type="application/javascript"></script>
+    <script src="/scripts/helper_icons.js" type="application/javascript"></script>
     <link rel="stylesheet" href="/style/style.css">
     <link rel="stylesheet" href="/style/course_list.css">
-    <link rel="stylesheet" href="/style/navbar.css">
     <title><%= page_title %> | Studium</title>
 </head>
 <body>
-    <%- include("./navbar.ejs"), { user } %>
+    <%- include("./navbar.ejs"), { current_user } %>
+    <%- include("./alert.ejs") %>
+    <%- include ("./bottom_banner.ejs") %>
 
     <div class="small_page_container">
-        <h1><%= header %></h1>
-        
-        <label for="sort">Sort: </label>
-        <select id="sort">
-            <option value="new_to_old">Newest to Oldest</option>
-            <option value="old_to_new">Oldest to Newest</option>
-        </select>
+        <div id="displayed_courses_window_wrapper">
+            <div id="displayed_courses_header_and_helper_icon_wrapper">
+                <h1 id="displayed_courses_header"><%= header %></h1>
 
-        <label id="select_subject_label" for="select_subject">Filter by Subject: </label>
-        <select id="select_subject">
-            <option value="All Subjects">All Subjects</option>
-            <option value="Art">Art</option>
-            <option value="Chemistry">Chemistry</option>
-            <option value="English">English</option>
-            <option value="Media">Media</option>
-            <option value="Physics">Physics</option>
-            <option value="Software Development">Software Development</option>
-        </select>
+                <div class='helper_icon_wrapper'>
+                    <img class='helper_icon' src='/images/helper_icon.png'>
 
-        <div id="courses">
-            <p>Finding courses...</p>
+                    <div id='displayed_courses_header_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                        <p class="helper_icon_text"><%= header_helper_icon_text %></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="filter_displayed_courses_wrapper">
+                <div id="filter_displayed_courses_by_subject_wrapper">
+                    <label for="filter_displayed_courses_by_subject_dropdown_menu" class="displayed_courses_dropdown_menu_label">
+                        Filter by Subject
+                    </label>
+                    <div id="filter_displayed_courses_by_subject_dropdown_menu_and_helper_icon_wrapper">
+                        <select id="filter_displayed_courses_by_subject_dropdown_menu" class="displayed_courses_dropdown_menu"></select>
+
+                        <div class='helper_icon_wrapper'>
+                            <img id='filter_displayed_courses_by_subject_dropdown_menu_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+    
+                            <div id='filter_displayed_courses_by_subject_dropdown_menu_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">Use this dropdown menu to filter the displayed courses by their subject. 
+                                    For example, if you want to see only the Mathematics courses, choose the option "Mathematics."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="filter_displayed_courses_by_start_date_wrapper">
+                    <label for="filter_displayed_courses_by_start_date_dropdown_menu" class="displayed_courses_dropdown_menu_label">
+                        Filter by Start Date
+                    </label>
+
+                    <div id="filter_displayed_courses_by_start_date_dropdown_menu_and_helper_icon_wrapper">
+                        <select id="filter_displayed_courses_by_start_date_dropdown_menu" class="displayed_courses_dropdown_menu">
+                            <option value="All Start Dates">All Start Dates</option>
+                            <option value="Upcoming">Upcoming</option>
+                            <option value="Passed">Passed</option>
+                        </select>
+
+                        <div class='helper_icon_wrapper'>
+                            <img id='filter_displayed_courses_by_subject_dropdown_menu_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+    
+                            <div id='filter_displayed_courses_by_start_date_dropdown_menu_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                <p class="helper_icon_text">Use this dropdown menu to filter the displayed courses by their start date. 
+                                    For example, if you want to see only courses which have not begun yet, choose the option "Upcoming." 
+                                    Alternatively, if you want to see only courses which have already begun, choose the option "Passed."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p id="course_display_message">Fetching courses...</p>
+
+            <div id="displayed_courses_wrapper">
+                <div id="displayed_courses"></div>
+            </div>
         </div>
     </div>
 </body>

@@ -1,0 +1,121 @@
+#homepage_content_wrapper {
+    width: 90%;
+    margin: auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+}
+
+#homepage_content_wrapper h1 {
+    margin: 0px;
+}
+
+.homepage_course_list_and_top_line_wrapper {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.homepage_course_list_top_line {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.homepage_course_list_top_line_header {
+    margin: 0px;
+}
+
+.homepage_course_list_top_line_header_and_helper_icon {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.homepage_course_list_see_all_button_and_helper_wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.homepage_course_list_top_line_header_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(-100% - 6px));
+}
+
+.homepage_course_list_see_all_button_helper_icon_text_wrapper {
+    transform:translate(-50%, calc(-100% - 6px));
+}
+
+.homepage_course_list_see_all_button_wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.homepage_course_list_see_all_button {
+    margin: 0px;
+    text-decoration: none;
+}
+
+.homepage_course_list_wrapper {
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: darkslategray;
+    border-radius: 10px;
+}
+
+.homepage_course_list_row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.homepage_course_listing_wrapper {
+    display: flex;
+    width: 25%;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.homepage_course_listing {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    border-radius: 10px;
+    background-color: white;
+    text-decoration: none;
+    padding: 10px;
+}
+
+.homepage_course_listing:hover {
+    background-color: lightgray;
+}
+
+.homepage_course_listing_title {
+    margin: 0px;
+    color: black;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.homepage_course_listing_subject {
+    margin: 0px;
+    color: rgb(71, 71, 71);
+}
+
+.homepage_course_listing_start_date_header {
+    margin: 0px;
+    color: black;
+}
+
+.homepage_course_listing_start_date_text {
+    margin: 0px;
+    color: black;
+}

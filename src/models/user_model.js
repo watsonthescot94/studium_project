@@ -1,55 +1,80 @@
 const mongoose = require('mongoose')
-const flashcard = require('./flashcard_model')
 
-const ChatReplyNotificationSchema = new mongoose.Schema({
+const HighlightedCommentNotifications = new mongoose.Schema({
     _id: {
-        type: String,
-        required: true
+        type: String
     },
-    video_id: {
-        type: String,
-        required: true
+    course_id: {
+        type: String
     },
-    original_author_id: {
-        type: String,
-        required: true
+    page_id: {
+        type: String
     },
-    read: {
-        type: Boolean,
-        default: false,
-        required: true
+    video_link_id: {
+        type: String
+    },
+    message_tab: {
+        type: String
+    },
+    highlighted_comment: {
+        type: String
     },
     date: {
-        type: Number,
-        required: true
+        type: Number
     },
-    new_replies: {
-        type: [String],
-        required: true
+    read: {
+        type: Boolean
     }
 })
 
-const NewQuestionNotificationSchema = new mongoose.Schema({
+const NewRepliesNotificationSchema = new mongoose.Schema({
     _id: {
-        type: String,
-        required: true
+        type: String
     },
-    video_id: {
-        type: String,
-        required: true
+    course_id: {
+        type: String
     },
-    question_askers: {
-        type: [String],
-        required: true
+    page_id: {
+        type: String
+    },
+    video_link_id: {
+        type: String
+    },
+    message_tab: {
+        type: String
+    },
+    comment_being_replied_to: {
+        type: String
+    },
+    new_replies: {
+        type: []
     },
     read: {
-        type: Boolean,
-        default: false,
-        required: true
+        type: Boolean
+    }
+})
+
+const NewQuestionOrFeedbackNotificationSchema = new mongoose.Schema({
+    _id: {
+        type: String
     },
-    date: {
-        type: Number,
-        required: true
+    course_id: {
+        type: String
+    },
+    page_id: {
+        type: String
+    },
+    video_link_id: {
+        type: String
+    },
+    message_tab: {
+        type: String
+    },
+    new_comments: {
+        type: []
+    },
+    read: {
+        type: Boolean
     }
 })
 
@@ -61,21 +86,21 @@ const UserSchema = new mongoose.Schema({
         unique: true,
         index: true
     },
-    surname: {
+    username: {
         type: String,
         trim: true,
-        required: true
+        required: true,
+        unique: true
     },
     forename: {
         type: String,
         trim: true,
         required: true
     },
-    username: {
+    surname: {
         type: String,
         trim: true,
-        required: true,
-        unique: true
+        required: true
     },
     password: {
         type: String,
@@ -85,31 +110,45 @@ const UserSchema = new mongoose.Schema({
     avatar_path: {
         type: String,
         trim: true,
-        default: "default_avatar.jpg",
+        default: "/images/default_avatar.jpg",
         required: true
-    },
-    flashcards: {
-        type: [flashcard]
     },
     created: {
         type: Date,
-        default: Date.now
+        default: Date.now,
+        required: true
     },
     enrolled_in: {
-        type: [String]
+        type: [String],
+        required: true,
+        default: []
     },
-    courses_taught: {
-        type: [String]
+    courses_in_charge_of: {
+        type: [String],
+        required: true,
+        default: []
     },
     notifications: {
-        chat_reply_notifications: {
-            type: [Object],
-            required: true
-        },
         new_question_notifications: {
-            type: [NewQuestionNotificationSchema],
-            required: true
+            type: [NewQuestionOrFeedbackNotificationSchema]
+        },
+        new_feedback_notifications: {
+            type: [NewQuestionOrFeedbackNotificationSchema]
+        },
+        new_replies: {
+            type: [NewRepliesNotificationSchema]
+        },
+        watched_comment_new_replies: {
+            type: [NewRepliesNotificationSchema]
+        },
+        highlighted_comment_notifications: {
+            type: [HighlightedCommentNotifications]
         }
+    },
+    templates: {
+        type: [Object],
+        required: true,
+        default: []
     }
 })
 

@@ -4,23 +4,348 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="/style/style.css">
-    <link rel="stylesheet" href="/style/profile.css">
+    <link rel="stylesheet" href="/style/user_account.css">
     <link rel="stylesheet" href="/style/navbar.css">
-    <title><%= user.username %> | Studium</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.4/dist/js.cookie.min.js"></script>
+    <script src="/scripts/alert.js" type="application/javascript"></script>
+    <script src="/scripts/user_account.js" type="application/javascript"></script>
+    <script src="/scripts/helper_icons.js" type="application/javascript"></script>
+    <title>@<%= profile_user.username %> | Studium</title>
 </head>
 <body>
-    <%- include("./navbar.ejs"), { user } %>
+    <div id="profile_detail_edit_window_wrapper">
+        <div id="profile_detail_edit_window_background"></div>
+
+        <div id="profile_detail_edit_window"></div>
+    </div>
+
+    <div id="delete_profile_window_wrapper">
+        <div id="delete_profile_window_background"></div>
+
+        <div id="delete_profile_window">
+            <div id='profile_detail_edit_window_header_and_helper_icon_wrapper'>
+                <h3 id='profile_detail_edit_window_header'>Delete Account</h3>
+    
+                <div class='helper_icon_wrapper'>
+                    <img class='helper_icon' src='/images/helper_icon.png'>
+    
+                    <div id='profile_detail_edit_window_header_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                        <p class='helper_icon_text'>
+                            To delete your account, enter your password in the text box labelled "Confirm password,"
+                            then click the "Delete Account" button. If you have entered the correct password, your 
+                            account will be deleted and this window will close.<br><br>
+                            To cancel deleting your account, click the "Cancel" button. This window will then close 
+                            and your account will not be deleted.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <p id="delete_profile_window_main_text">
+                Please enter your password to confirm account deletion.
+            </p>
+
+            <div class="delete_profile_window_field_wrapper">
+                <div class="profile_detail_edit_window_input_and_helper_icon_wrapper">
+                    <label for="delete_profile_window_confirm_password_input" class="delete_profile_window_label">
+                        Confirm password
+                    </label>
+
+                    <div class='helper_icon_wrapper'>
+                        <img class='helper_icon' src='/images/helper_icon.png'>
+    
+                        <div class='profile_detail_edit_window_input_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                            <p class='helper_icon_text'>
+                                Please confirm your password in the text box below. This is required so we know it 
+                                is really you deleting your account.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <input id="delete_profile_window_confirm_password_input" class="delete_profile_window_input"
+                    type="password" placeholder="Confirm your password here..." autocomplete="new-password">
+
+                <p id='delete_profile_window_confirm_password_error_message' class='page_error_message'></p>
+            </div>
+
+            <div id='delete_profile_window_bottom_buttons_wrapper'>
+                <span class='profile_detail_edit_window_button_and_helper_icon_wrapper leftmost_button'>
+                    <button id='delete_profile_confirm_button' class='red_button'>Delete Account</button>
+
+                    <div class='helper_icon_wrapper'>
+                        <img class='helper_icon' src='/images/helper_icon.png'>
+    
+                        <div class='profile_detail_edit_window_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                            <p class='helper_icon_text'>
+                                If you have entered the correct password, when you click the "Delete Account" button 
+                                your account will be deleted and you will be redirected to the homepage.
+                            </p>
+                        </div>
+                    </div>
+                </span>
+
+                <span class='profile_detail_edit_window_button_and_helper_icon_wrapper leftmost_button'>
+                    <button id='delete_profile_cancel_button' class='white_button'>Cancel</button>
+
+                    <div class='helper_icon_wrapper'>
+                        <img class='helper_icon' src='/images/helper_icon.png'>
+    
+                        <div class='profile_detail_edit_window_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                            <p class='helper_icon_text'>
+                                When you click the "Cancel" button, this window will close without your account being 
+                                deleted.
+                            </p>
+                        </div>
+                    </div>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <%- include ("./alert.ejs") %>
+    <%- include("./navbar.ejs"), { current_user } %>
+    <%- include ("./bottom_banner.ejs") %>
 
     <div class="small_page_container">
-        <% if (user_exists) { %>
-            <img class='profile_avatar' src="<%= user.avatar_path %>">
-            <p><b>Username:</b> <%= user.username %></p>
-            <p><b>Name:</b> <%= user.forename %> <%= user.surname %></p>
-            <p><b>Email:</b> <%= user.email %></p>
-        <% } else { %>
-            <p>User account not found</p>
-        <% } %>
+        <div id="profile_details_window_wrapper">
+            <div id="profile_page_header_and_helper_icon_wrapper">
+                <h1 id="profile_page_header">
+                    <% if (profile_user.is_current_user) { %>
+                        Your Profile
+                    <% } else { %>
+                        Profile: @<%= profile_user.username %>
+                    <% } %>
+                </h1>
+
+                <div class='helper_icon_wrapper'>
+                    <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+
+                    <div id='profile_page_header_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_bottom'>
+                        <p class="helper_icon_text">
+                            <% if (profile_user.is_current_user) { %>
+                                This is your profile page. Displayed below are your profile details. If you wish to update 
+                                any of these details, click the "Update" button to the right of that detail. This will display 
+                                a window in which you can either submit or cancel the update.<br><br>If you wish to delete 
+                                your account, click the "Delete Account" button. This will display a window in which you can 
+                                either confirm or cancel the deletion of your account.
+                            <% } else { %>
+                                This is the profile page of user @<%=profile_user.username%>. Displayed below are their 
+                                profile details.
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div id="profile_avatar_and_details_wrapper">
+                <div id="profile_avatar_wrapper">
+                    <img id="profile_avatar" src="<%= profile_user.avatar_path %>">
+                </div>
+
+                <div id="profile_details_wrapper">
+                    <% if (profile_user.is_current_user && typeof profile_user.email !== 'undefined') { %>
+                        <div class="profile_detail_wrapper">
+                            <div class="profile_detail_header_and_helper_icon_wrapper">
+                                <h3 class="profile_detail_header">Email Address</h3>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='profile_detail_header_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            Displayed below is your email address. If you want to update your email 
+                                            address, click the "Update" button to the right. This will display a 
+                                            window in which you can either update your email address or cancel the update.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="profile_detail_text_wrapper">
+                                <p id="profile_email" class="profile_detail_text"><%= profile_user.email %></p>
+
+                                <div class="update_profile_detail_button_and_helper_icon_wrapper">
+                                    <button id="update_email_button" class="update_profile_detail_button white_button">Update</button>
+                                    
+                                    <div class='helper_icon_wrapper'>
+                                        <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+                    
+                                        <div class='update_profile_detail_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                            <p class="helper_icon_text">
+                                                Clicking this "Update" button will display a window in which you can 
+                                                either update your email address or cancel the update.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <% if (profile_user.is_current_user) { %>
+                        <div class="divider"></div>
+                    <% } %>
+
+                    <div class="profile_detail_wrapper">
+                        <div class="profile_detail_header_and_helper_icon_wrapper">
+                            <h3 class="profile_detail_header">Username</h3>
+
+                            <div class='helper_icon_wrapper'>
+                                <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+            
+                                <div class='profile_detail_header_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                    <p class="helper_icon_text">
+                                        <% if (profile_user.is_current_user) { %>
+                                            Displayed below is your username. If you want to update your username, click the 
+                                            "Update" button to the right. This will display a window in which you can either 
+                                            update your username or cancel the update.
+                                        <% } else { %>
+                                            Displayed below is the username of user @<%=profile_user.username%>.
+                                        <% } %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile_detail_text_wrapper">
+                            <p id="profile_username" class="profile_detail_text">@<%= profile_user.username %></p>
+                            <% if (profile_user.is_current_user) { %>
+                                <div class="update_profile_detail_button_and_helper_icon_wrapper">
+                                    <button id="update_username_button" class="update_profile_detail_button white_button">Update</button>
+                                    
+                                    <div class='helper_icon_wrapper'>
+                                        <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+                    
+                                        <div class='update_profile_detail_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                            <p class="helper_icon_text">
+                                                Clicking this "Update" button will display a window in which you can 
+                                                either update your username or cancel the update.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <% if (profile_user.is_current_user) { %>
+                        <div class="divider"></div>
+                    <% } %>
+
+                    <div class="profile_detail_wrapper" <% if (!profile_user.is_current_user) { %> style="margin-bottom:0px" <% } %>>
+                        <div class="profile_detail_header_and_helper_icon_wrapper">
+                            <h3 class="profile_detail_header">Name</h3>
+
+                            <div class='helper_icon_wrapper'>
+                                <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+            
+                                <div class='profile_detail_header_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                    <p class="helper_icon_text">
+                                        <% if (profile_user.is_current_user) { %>
+                                            Displayed below is your name. If you want to update your name, click the 
+                                            "Update" button to the right. This will display a window in which you can either 
+                                            update your name or cancel the update.
+                                        <% } else { %>
+                                            Displayed below is the name of user @<%=profile_user.username%>.
+                                        <% } %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="profile_detail_text_wrapper">
+                            <p id="profile_name" class="profile_detail_text"><%= profile_user.forename %> <%= profile_user.surname %></p>
+                            <% if (profile_user.is_current_user) { %>
+                                <div class="update_profile_detail_button_and_helper_icon_wrapper">
+                                    <button id="update_name_button" class="update_profile_detail_button white_button">Update</button>
+                                    
+                                    <div class='helper_icon_wrapper'>
+                                        <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+                    
+                                        <div class='update_profile_detail_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                            <p class="helper_icon_text">
+                                                Clicking this "Update" button will display a window in which you can 
+                                                either update your name or cancel the update.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <% if (profile_user.is_current_user) { %>
+                        <div class="divider"></div>
+                    <% } %>
+
+                    <% if (profile_user.is_current_user) { %>
+                        <div class="profile_detail_wrapper">
+                            <div class="profile_detail_header_and_helper_icon_wrapper">
+                                <h3 class="profile_detail_header">Password</h3>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='profile_detail_header_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            Displayed below is a representation of your password. To protect your account, 
+                                            this representation will always be 6 characters long no matter how long your 
+                                            password actually is.<br><br>
+                                            If you want to update your password, click the "Update" button to the right. This will 
+                                            display a window in which you can either update your password or cancel the update.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="profile_detail_text_wrapper">
+                                <p id="profile_password" class="profile_detail_text">&bull;&bull;&bull;&bull;&bull;&bull;</p>
+                                
+                                <div class="update_profile_detail_button_and_helper_icon_wrapper">
+                                    <button id="update_password_button" class="update_profile_detail_button white_button">Update</button>
+                                    
+                                    <div class='helper_icon_wrapper'>
+                                        <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+                    
+                                        <div class='update_profile_detail_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                            <p class="helper_icon_text">
+                                                Clicking this "Update" button will display a window in which you can 
+                                                either update your password or cancel the update.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div id="delete_profile_button_and_helper_icon_wrapper">
+                            <button id="delete_profile_button" class="red_button">Delete Account</button>
+
+                            <div class='helper_icon_wrapper'>
+                                <img id='profile_page_header_helper_icon' class='helper_icon' src='/images/helper_icon.png'>
+            
+                                <div id='delete_profile_button_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                    <p class="helper_icon_text">
+                                        When you click the "Delete Account" button, a window will be displayed in which you 
+                                        can either confirm or cancel the deletion of your account.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        
     </div>
 </body>
 </html>

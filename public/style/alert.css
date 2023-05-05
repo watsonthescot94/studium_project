@@ -1,0 +1,17 @@
+#alert_message_container {
+    opacity: 0;
+    padding: 10px;
+    position: fixed;
+    bottom: 55px;
+    left: 50%;
+    background-color: #228B22;
+    transform:translateX(-50%);
+    box-shadow: 5px 5px 5px black;
+    border-radius: 5px;
+    z-index: 1;
+}
+
+#alert_message {
+    color: white;
+    margin: 0px;
+}

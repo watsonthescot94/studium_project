@@ -4,15 +4,22 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.4/dist/js.cookie.min.js"></script>
     <link rel="stylesheet" href="/style/style.css">
-    <link rel="stylesheet" href="/style/navbar.css">
+    <link rel="stylesheet" href="/style/message_page.css">
     <title><%= message_title %></title>
 </head>
 <body>
-    <%- include ("./navbar.ejs", { user }) %>
+    <%- include ("./navbar.ejs", { current_user }) %>
 
     <div class="small_page_container">
-        <%- message %>
+        <div id="message_wrapper">
+            <% if (typeof message !== 'undefined') { %>
+                <%- message %>
+            <% } else { %>
+                <p>Message not found.</p>
+            <% } %>
+        </div>
     </div>
 </body>
 </html>

@@ -1,32 +1,7 @@
 const mongoose = require('mongoose')
-const flashcard = require('./flashcard_model')
-
-const PageContentSchema = new mongoose.Schema({
-    type: {
-        type: String,
-        trim: true,
-        required: true
-    },
-    text: {
-        type: String,
-        trim: true,
-        required: false
-    },
-    visible: {
-        type: Boolean,
-        trim: true,
-        required: true,
-        default: true
-    },
-    video_path: {
-        type: String,
-        trim: true,
-        required: false
-    }
-})
 
 const CoursePageSchema = new mongoose.Schema({
-    name: {
+    title: {
         type: String,
         trim: true,
         required: true
@@ -36,24 +11,22 @@ const CoursePageSchema = new mongoose.Schema({
         trim: true,
         required: true
     },
-    content: {
-        type: [PageContentSchema]
-    },
-    flashcards: {
-        type: [flashcard]
+    top_element: {
+        type: Object,
+        required: true
     },
     created: {
         type: Date,
-        default: Date.now
+        default: new Date()
     },
-    visible: {
+    visible_only_to_staff: {
         type: Boolean,
         default: false
     }
 })
 
 const CourseSchema = new mongoose.Schema({
-    name: {
+    title: {
         type: String,
         trim: true,
         required: true
@@ -63,34 +36,51 @@ const CourseSchema = new mongoose.Schema({
         trim: true,
         required: true
     },
-    type: {
+    subject: {
         type: String,
         trim: true,
         required: true
     },
     pages: {
-        type: [CoursePageSchema]
+        type: [CoursePageSchema],
+        required: true,
+        default: []
     },
     students: {
-        type: [String]
+        type: [String],
+        required: true,
+        default: []
     },
-    teachers: {
-        type: [String]
+    staff: {
+        type: [Object],
+        required: true,
+        default: []
     },
-    moderators: {
-        type: [String]
+    publicly_listed: {
+        type: Boolean,
+        default: false,
+        required: true
+    },
+    templates_include_content: {
+        type: Boolean,
+        default: false,
+        required: true
+    },
+    start_date: {
+        type: Date,
+        required: true
+    },
+    template: {
+        type: Object,
+        required: true,
+        default: {
+            set: false
+        }
     },
     created: {
         type: Date,
-        default: Date.now
-    },
-    classes_visible_to_public: {
-        type: Boolean,
-        default: true
-    },
-    course_visible_to_public: {
-        type: Boolean,
-        default: true
+        default: new Date(),
+        required: true
     }
 })
 

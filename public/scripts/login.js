@@ -1,45 +1,73 @@
-var logging_in = false; // Will be used to prevent a further log in request before the current request is complete
-
 $(function() {
-    $("#login_submit_button").click(login);
+    $.when(getCurrentUser().done(setBottomBanner()));
+    allowUserToLoginWithEnterKeyPress();
 })
+
+function allowUserToLoginWithEnterKeyPress() {
+    $(".login_input").on("keypress",function(e) {
+        if(e.which == 13) {
+            $("#login_submit_button").click();
+        }
+    });
+}
 
 /**
  * Method for logging the user in or displaying error messages on login fail
  */
-function login() {
-    if (!logging_in) {
-        // User is currently trying to log in
-        logging_in = true;
+/*function login() {
+    // Get the credentials input by the user
+    let username = $("#login_username_input").val();
+    let password = $("#login_password_input").val();
 
-        // Get the credentials input by the user
-        let username = $("#login_username").val();
-        let password = $("#login_password").val();
-
-        let input = {
-            username: username,
-            password: password
-        }
-
-        // Attempt to log the user in
-        $.post('/login', input, function(res) {
-            // Response received, log in attempt is complete
-            logging_in = false;
-
-            // If any errors occurred during the login attempt
-            if (res.errors.length > 0) {
-                // Empty the error messages section and add new error messages
-                $("#error_messages").html("");
-
-                res.errors.forEach(function(error) {
-                    $("#error_messages").append("<p class='error_message'>" + error + "</p>");
-                })
-            }
-            else { // If no errors occurred
-                // User successfully logged in, so redirect to homepage
-                window.location.href = "/";
-            }
-        })
+    let data = {
+        username: username,
+        password: password
     }
-    
-}
+
+    // Attempt to log the user in
+    $.post('/login', data, function(res) {
+        // If any errors occurred during the login attempt
+        if (res.errors.length > 0) {
+            console.log(res.errors);
+            let username_error = false;
+            let password_error = false;
+            let login_error = false;
+
+            res.errors.forEach(function(error) {
+                console.log(error);
+                if (error.error_type === "username_error") {
+                    username_error = true;
+                    $("#login_username_error_message").html(error.error_message);
+                    $("#login_username_error_message").css("display", "block");
+                }
+                else if (error.error_type === "password_error") {
+                    console.log("password error");
+                    password_error = true;
+                    $("#login_password_error_message").html(error.error_message);
+                    $("#login_password_error_message").css("display", "block");
+                }
+                else if (error.error_type === "login_error") {
+                    login_error = true;
+                    $("#login_password_error_message").html(error.error_message);
+                    $("#login_password_error_message").css("display", "block");
+                }
+            })
+
+            if (!username_error) {
+                $("#login_username_error_message").css("display", "none");
+            }
+
+            if (!password_error && !login_error) {
+                $("#login_password_error_message").css("display", "none");
+            }
+        }
+        else { // If no errors occurred
+            // User successfully logged in, so redirect to homepage
+            Cookies.set("display_alert_message", true);
+            Cookies.set("alert_message_text", "Logged in");
+            Cookies.set("alert_message_type", "good");
+            Cookies.set("alert_message_length", 3000);
+            window.location.href = "/";
+        }
+    })
+}*/

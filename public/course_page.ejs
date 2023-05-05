@@ -4,67 +4,451 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="/scripts/course_page.js" type="application/javascript"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" href="/style/style.css">
     <link rel="stylesheet" href="/style/course_page.css">
-    <link rel="stylesheet" href="/style/navbar.css">
-    <title><%= page_name %></title>
+    <link rel="stylesheet" href="/style/video_lectures.css">
+    <!--<link rel="stylesheet" href="/style/create_course.css">-->
+    <link rel="stylesheet" href="/style/helper_icons.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.4/dist/js.cookie.min.js"></script>
+    <script src="/scripts/page_elements.js" type="application/javascript"></script>
+    <script src="/scripts/element_editors.js" type="application/javascript"></script>
+    <script src="/scripts/templates.js" type="application/javascript"></script>
+    <script src="/scripts/session_messages.js" type="application/javascript"></script>
+    <script src="/scripts/get_length_of_time.js" type="application/javascript"></script>
+    <script src="/scripts/convert_date.js" type="application/javascript"></script>
+    <script src="/scripts/course_page_2.js" type="application/javascript"></script>
+    <script src="/scripts/video_control.js" type="application/javascript"></script>
+    <script src="/scripts/search_users.js" type="application/javascript"></script>
+    <script src="/scripts/course_subjects.js" type="application/javascript"></script>
+    <script src="/scripts/helper_icons.js" type="application/javascript"></script>
+    <title></title>
 </head>
 <body>
-    <div class="hidden">
-        <p id="course_id_page_id"><%=course_id%> <%=page_id%></p>
+    <div id="confirm_window_wrapper">
+        <div id="confirm_window_background"></div>
+
+        <div id="confirm_window"></div>
     </div>
 
-    <div id="pop_up_background">
-        <div id="page_delete_confirmation_container" class="pop_up_container">
-            <h1>Delete Page</h1>
-            <p>Please enter your password to confirm page deletion</p>
-            <input id="page_delete_password_input" type="password">
-            <div id="page_delete_error_message"></div>
-            <button id="page_delete_confirmation_button">CONFIRM</button>
-            <button id="page_delete_cancel_button">CANCEL</button>
+    <div id="add_page_window_wrapper">
+        <div id="add_page_window_background"></div>
+
+        <div id="add_page_window">
+            <h3>Add Page</h3>
+            <div class='divider'></div>
+            <p id="add_page_window_info"></p>
+            <p>Page Title</p>
+            <textarea id="add_page_textarea" placeholder="Enter page title here..." rows="2"></textarea>
+            <p id="add_page_textarea_error_message" class="page_error_message"></p>
+            <div id="new_page_visible_checkbox_wrapper">
+                <input id="new_page_visible_checkbox" type="checkbox">
+                <label for="new_page_visible_checkbox">This page is visible to staff only</label><br>
+            </div>
+            <p id="add_page_visible_error_message" class="page_error_message"></p>
+            <span id="add_page_confirm_button_wrapper">
+                <button id='add_page_confirm_button' class='white_button leftmost'>Add Page</button>
+            </span>
+            <button id='cancel_add_page_button' class='white_button'>Cancel</button>
         </div>
     </div>
 
-    <%- include("./navbar.ejs"), { user } %>
+    <div id="video_window_wrapper">
+        <div id="video_window_background"></div>
 
-    <div class="small_page_container">
-
-        <div id="page_info" class="page_info">
-            <h3><a href="/course/<%=course_id%>">&#60; <%=course_name%></a></h3>
-            <div id="course_info" class="course_info">
-                <h1 id="page_name"><%=page_name%></h1>
-                <button id="make_page_template_button">MAKE PAGE TEMPLATE</button>
-                <p><b>Description:</b> <span id="page_description"><%=page_description%></span></p>
+        <div id="pop_up_background">
+            <div id="add_new_comment_container">
+                <p id="add_new_comment_title"></p>
+                <div class="divider"></div>
+                <input id="add_new_comment_input" type="text" autocomplete="off"></input>
+                <div id="add_new_comment_error_message" class="page_error_message"></div>
+                <button id="add_new_comment_submit_button" class="white_button leftmost">Submit</button>
+                <button id="add_new_comment_cancel_button" class="white_button">Cancel</button>
+            </div>
+    
+            <div id="add_new_reply_container">
+                <p>Replying To:</p>
+                <div id="add_new_reply_recipient_container" class="message_wrapper"></div>
+                <input id="add_new_reply_input" placeholder="Write your reply..." autocomplete="off"></input>
+                <p id="add_new_reply_error_message" class="page_error_message"></p>
+                <button id="add_new_reply_submit_button" class="white_button leftmost">Submit</button>
+                <button id="add_new_reply_cancel_button" class="white_button">Cancel</button>
             </div>
         </div>
 
-        <div id="edit_page_info" class="page_info">
-            <h3><a href="/course/<%=course_id%>">&#60; <%=course_name%></a></h3>
-            <p><b>Page Name:</b></p>
-            <input type="text" id="edit_page_name_input"><br><br>
-            <p><b>Description:</b></p>
-            <textarea id="edit_page_description_input"></textarea><br><br>
-            <% if (teacher_authorised) { %>
-                <div id="delete_page_button_container">
-                    <button id="delete_page_button">DELETE PAGE</button>
+        <div id="video_window">
+            <div id="video_window_header">
+                <h2>Video</h2>
+                <p id="close_video_window_button">X</p>
+            </div>
+
+            <div id="video_window_body">
+                <div id="video_and_chatbox_container_border">
+                    <div id="video_and_chatbox_container">
+                        <div id="video_container">
+                            <video id="video_lecture" controls style="background-color: black">
+                                <source src="/videos/mary berry.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+            
+                            <div id="receive_question_notifications_checkbox_container"></div>
+                            <h1 id="video_title"></h1>
+                            <p id="video_description"></p>
+                        </div>
+
+                        <div id="chatbox_container">
+                            <div id="tabs_container">
+                                <div id="questions_tab_container">
+                                    <div id="questions_tab" class="tab active_tab"><p id="questions_tab_text" class="unselectable"><b>Questions</b></p></div>
+                                </div>
+                                <div id="feedback_tab_container">
+                                    <div id="feedback_tab" class="tab"><p id="feedback_tab_text" class="unselectable"><b>Feedback</b></p></div>
+                                </div>
+                            </div>
+            
+                            <div id="chatbox_messages"></div>
+            
+                            <div id="add_new_comment_button_wrapper">
+                                <input id="add_new_comment_button" type="button" value="Ask a Question">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            <% } %>
+            </div>
         </div>
+    </div>
 
-        <% if (teacher_authorised) { %> 
-            <button id="enter_edit_mode_button">ENTER EDIT MODE</button>
-            <button id="save_edit_button">SAVE EDIT</button>
-        <% } %>
+    <%- include ("./alert.ejs") %>
+    <%- include ("./navbar.ejs", { current_user }) %>
+    <%- include ("./bottom_banner.ejs") %>
+    
+    <!-- Course and Template -->
+    <div id="course_background">
+        <div id="course_and_template_wrapper">
+            <div id="course_and_pages_list_and_template_controls_wrapper">
 
-        <br><h1>Content</h1>
-        <% if (typeof page_content_count !== 'undefined' && page_content_count == 0) { %>
-            <p id="no_content_yet">No content yet</p>
-        <% } %>
-        <button id="add_text_bubble_button">ADD FIRST TEXT BUBBLE</button>
-        <div id="page_content"></div>
+                <div id="course_details_and_page_wrapper">
 
+                    <div id="course_details_wrapper">
+                        <h1 id="edit_course_details_header" class="course_detail_edit">Edit Course Details</h1>
+
+                        <div id="course_title_wrapper">
+                            <div id="course_title_text_and_helper_icon_wrapper">
+                                <h1 id="course_title_text" class="course_detail"></h1>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div id='course_title_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_bottom'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 id="course_title_header" class="course_detail_edit">Title</h3>
+                        </div>
+
+                        <div id="course_subject_wrapper">
+                            <div id="course_subject_and_helper_icon_wrapper">
+                                <p id="course_subject_text" class="course_detail"></p>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div id='course_subject_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 id="course_subject_header" class="course_detail_edit">Subject</h3>
+                        </div>
+
+                        <div id="course_enrol_template_buttons_wrapper" class="course_detail"></div>
+
+                        <div id="course_details_header_separator" class="divider course_detail"></div>
+
+                        <div id="course_start_date_wrapper" class="course_detail_wrapper">
+                            <div class="course_detail_label_and_helper_icon_wrapper">
+                                <h3 id="course_start_date_header">Start Date</h3>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='course_detail_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="course_start_date_text" class="course_detail"></p>
+                        </div>
+
+                        <div id="course_about_wrapper" class="course_detail_wrapper">
+                            <div class="course_detail_label_and_helper_icon_wrapper">
+                                <h3 id="course_about_header">About This Course</h3>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='course_detail_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <p id="course_description_text" class="course_detail"></p>
+                        </div>
+
+                        <div id="course_staff_wrapper" class="course_detail_wrapper">
+                            <div class="course_detail_label_and_helper_icon_wrapper">
+                                <h3 id="course_staff_header">Staff</h3>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='course_detail_label_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="saved_staff_list_wrapper" class="course_detail"></div>
+                            <p id="saved_staff_show_more_button" class="course_detail"></p>
+                        </div>
+
+                        <div id="course_details_course_page_connector"></div>
+                    </div>
+
+                    <div id="course_page_wrapper">
+                        <div id="course_page_header_wrapper">
+                            <h2 id="course_page_header_title" class="section_title">COURSE PAGE</h2>
+
+                            <div id="course_page_stats" class="page_stats">
+                                <h3>Page Content:</h3>
+                                <p>Text Blocks: <span id="course_page_text_block_count"></span></p>
+                                <p>Images: <span id="course_page_image_count"></span></p>
+                                <p>Videos: <span id="course_page_video_count"></span></p>
+                            </div>
+
+                            <div class="divider"></div>
+                        </div>
+
+                        <div id="course_page_content"></div>
+                    </div>
+                </div>
+
+                <div id="pages_list_and_template_controls_wrapper">
+                    <div id="pages_list_wrapper">
+                        <div id="pages_list_header">
+                            <div id="pages_list_header_text_and_helper_icon_wrapper">
+                                <h3>Pages</h3>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div id="pages_list_header_text_helper_icon_wrapper" class='helper_icon_text_wrapper helper_icon_text_wrapper_bottom'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button id="add_page_button" class="white_button">Add Page</button>
+                        </div>
+
+
+                        <div id="pages_list">
+                            <p id="pages_list_message">Fetching page list...</p>
+                            <div id="pages_list_pages"></div>
+                        </div>
+
+                        <div id="pages_list_course_details_connector"></div>
+                        <div id="pages_list_template_controls_connector"></div>
+                    </div>
+
+                    <div id="template_controls_wrapper">
+                        <div id="template_controls_header">
+                            <div id="template_controls_header_text_and_helper_icon_wrapper">
+                                <h3>Template Controls</h3>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div id='template_controls_header_text_helper_icon_text_wrapper' class='helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+
+                        <div id="template_course_name_wrapper">
+                            <p>Template Course:</p>
+                            <p id="template_course_link"></p>
+                        </div>
+
+                        <div id="template_control_buttons">
+                            <div id="add_template_button_and_helper_icon_wrapper" class="template_control_button_and_helper_icon_wrapper">
+                                <button id="add_template_button" class="white_button">Add Template</button>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='template_control_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="change_template_button_and_helper_icon_wrapper" class="template_control_button_and_helper_icon_wrapper">
+                                <button id="change_template_button" class="white_button">Change Template</button>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='template_control_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="remove_template_button_and_helper_icon_wrapper" class="template_control_button_and_helper_icon_wrapper">
+                                <button id="remove_template_button" class="white_button">Remove Template</button>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='template_control_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="clone_template_page_structure_button_and_helper_icon_wrapper" class="template_control_button_and_helper_icon_wrapper">
+                                <button id="clone_template_page_structure_button" class="white_button">Clone Page Structure</button>
+
+                                <div class='helper_icon_wrapper'>
+                                    <img class='helper_icon' src='/images/helper_icon.png'>
+                
+                                    <div class='template_control_button_helper_icon_text_wrapper helper_icon_text_wrapper helper_icon_text_wrapper_top'>
+                                        <p class="helper_icon_text">
+                                            bleh bleh bleh
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="show_template_checkbox_wrapper">
+                            <input id="show_template_checkbox" type="checkbox">
+                            <label for="show_template_checkbox">Show Template</label>
+                        </div>
+
+                        <div id="show_template_content_checkbox_wrapper">
+                            <input id="show_template_content_checkbox" type="checkbox">
+                            <label for="show_template_content_checkbox">Show Template Content</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="template_and_pages_list_wrapper">
+                <div id="template_details_and_page_wrapper">
+                    <div id="template_details_wrapper">
+                        <div id="template_title_text_wrapper">
+                            <h1 id="template_title_text"></h1>
+                        </div>
+                        
+                        <div id="template_subject_wrapper">
+                            <p id="template_subject_text"></p>
+                        </div>
+                        
+                        <div id="template_save_template_button_wrapper">
+                            <button id="template_save_template_button" class="white_button">Save Template</button>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <div id="template_start_date_wrapper">
+                            <h3 id="template_start_date_header">Start Date</h3>
+                            <p id="template_start_date_text"></p>
+                        </div>
+                        
+                        <div id="template_about_wrapper">
+                            <h3 id="template_about_header">About This Course</h3>
+                            <p id="template_description_text"></p>
+                        </div>
+
+                        <div id="template_staff_wrapper">
+                            <h3 id="template_staff_header">Staff</h3>
+                            <div id="template_saved_staff_list_wrapper"></div>
+                            <p id="template_saved_staff_show_more_button"></p>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <p id="template_details_word_counts" class="word_character_counts">
+                            Title: <span id="template_details_title_word_count"></span> words | 
+                            Description: <span id="template_details_description_word_count"></span> words
+                        </p>
+
+                        <div id="template_details_buttons_wrapper">
+                            <button id="template_edit_course_details_button" class="white_button">Edit Course Details</button>
+                            <button id="template_delete_course_button" class="red_button">Delete Course</button>
+                        </div>
+
+                        <div id="template_details_course_page_connector"></div>
+                    </div>
+
+                    <div id="template_page_wrapper">
+                        <div id="template_page_header_wrapper">
+                            <h2 id="template_page_header_title" class="section_title">TEMPLATE PAGE</h2>
+
+                            <div id="template_page_stats" class="page_stats">
+                                <h3>Page Content:</h3>
+                                <p>Text Blocks: <span id="template_page_text_block_count"></span></p>
+                                <p>Images: <span id="template_page_image_count"></span></p>
+                                <p>Videos: <span id="template_page_video_count"></span></p>
+                            </div>
+
+                            <div class="divider"></div>
+                        </div>
+
+                        <div id="template_page_content"></div>
+                    </div>
+                </div>
+
+                <div id="template_pages_list_wrapper">
+                    <div id="template_pages_list_header">
+                        <h3>Pages</h3>
+                    </div>
+
+                    <div id="template_pages_list">
+                        <div id="template_pages_list_pages"></div>
+                    </div>
+
+                    <div id="template_details_template_page_connector"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
